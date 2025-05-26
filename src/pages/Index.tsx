@@ -25,8 +25,12 @@ const Index = () => {
       <header className="relative z-10 p-4 bg-white/10 backdrop-blur-md border-b border-white/20">
         <div className="flex items-center justify-between max-w-md mx-auto">
           <div className="flex items-center gap-2">
-            <Crown className="w-8 h-8 text-princess-gold animate-pulse" />
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-princess-pink to-princess-purple bg-clip-text text-transparent">
+            <img 
+              src="/lovable-uploads/b9511081-08ef-4089-85f5-8978bd7b19b9.png"
+              alt="SHROUK Logo"
+              className="w-8 h-8 animate-pulse"
+            />
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent">
               SHROUK Mining
             </h1>
           </div>
@@ -52,7 +56,7 @@ const Index = () => {
         {[...Array(6)].map((_, i) => (
           <Sparkles
             key={i}
-            className="absolute text-princess-gold opacity-60 animate-sparkle"
+            className="absolute text-blue-400 opacity-60 animate-sparkle"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
