@@ -146,4 +146,25 @@
   .princess-button:active {
     transform: translateY(0);
   }
+
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@layer utilities {
+  .animate-fade-out {
+    animation: fade-out 1s ease-out forwards;
+  }
+  
+  @keyframes fade-out {
+    0% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-30px) scale(0.8);
+    }
+  }
 }
