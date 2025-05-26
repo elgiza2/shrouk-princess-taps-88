@@ -15,6 +15,10 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('mining');
   const { t } = useLanguage();
 
+  const handleAdminAccess = () => {
+    setActiveTab('admin');
+  };
+
   return (
     <div className="min-h-screen bg-princess-gradient sparkle-bg">
       {/* Header */}
@@ -35,7 +39,7 @@ const Index = () => {
         {activeTab === 'mining' && <MiningDashboard />}
         {activeTab === 'cards' && <PrincessCards />}
         {activeTab === 'wallet' && <WalletSection />}
-        {activeTab === 'tasks' && <TasksPage />}
+        {activeTab === 'tasks' && <TasksPage onAdminAccess={handleAdminAccess} />}
         {activeTab === 'referral' && <ReferralPage />}
         {activeTab === 'admin' && <AdminPanel />}
       </main>

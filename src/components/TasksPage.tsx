@@ -16,9 +16,14 @@ interface Task {
   icon: React.ComponentType<any>;
 }
 
-export const TasksPage = () => {
+interface TasksPageProps {
+  onAdminAccess?: () => void;
+}
+
+export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const [adminTapCount, setAdminTapCount] = useState(0);
   
   const [tasks, setTasks] = useState<Task[]>([
     {
@@ -67,6 +72,25 @@ export const TasksPage = () => {
     });
   };
 
+  const handleHeaderTap = () => {
+    const newCount = adminTapCount + 1;
+    setAdminTapCount(newCount);
+    
+    if (newCount >= 5) {
+      setAdminTapCount(0);
+      onAdminAccess?.();
+      toast({
+        title: "Admin Access Granted!",
+        description: "Welcome to the admin panel",
+      });
+    } else {
+      toast({
+        title: `${5 - newCount} more taps for admin access`,
+        description: "Keep tapping on 'Daily Tasks'",
+      });
+    }
+  };
+
   const completedCount = tasks.filter(t => t.completed).length;
   const totalTasks = tasks.length;
 
@@ -75,7 +99,12 @@ export const TasksPage = () => {
       {/* Progress Overview */}
       <Card className="glass-card p-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-lg">Daily Tasks</h2>
+          <h2 
+            className="font-bold text-lg cursor-pointer select-none"
+            onClick={handleHeaderTap}
+          >
+            Daily Tasks
+          </h2>
           <Badge variant="outline" className="bg-princess-pink/20 text-princess-pink">
             {completedCount}/{totalTasks}
           </Badge>

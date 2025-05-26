@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,47 +25,69 @@ export const PrincessCards = () => {
   const [cards, setCards] = useState<PrincessCard[]>([
     {
       id: '1',
-      name: 'Rose Princess',
+      name: 'Barbie',
       type: 'shrouk',
-      hourlyYield: 0.01,
-      price: 1.0,
+      hourlyYield: 2000,
+      price: 2000,
       level: 1,
       owned: false,
       rarity: 'common',
-      description: 'A gentle princess of roses who brings prosperity'
+      description: 'The iconic fashionista princess who brings style and prosperity'
     },
     {
       id: '2',
-      name: 'Crystal Fairy',
-      type: 'ton',
-      hourlyYield: 0.005,
-      price: 0.1,
+      name: 'Rapunzel',
+      type: 'shrouk',
+      hourlyYield: 10000,
+      price: 5000,
       level: 1,
-      owned: true,
+      owned: false,
       rarity: 'rare',
-      description: 'A magical fairy who controls crystal energies'
+      description: 'The tower princess with magical golden hair'
     },
     {
       id: '3',
-      name: 'Golden Queen',
+      name: 'Elsa',
       type: 'shrouk',
-      hourlyYield: 0.05,
-      price: 10.0,
+      hourlyYield: 20000,
+      price: 10000,
       level: 1,
       owned: false,
       rarity: 'epic',
-      description: 'The mighty queen of the golden realm'
+      description: 'The ice queen who controls frost and snow magic'
     },
     {
       id: '4',
-      name: 'Star Empress',
-      type: 'ton',
-      hourlyYield: 0.02,
-      price: 1.0,
+      name: 'Cinderella',
+      type: 'shrouk',
+      hourlyYield: 30000,
+      price: 20000,
+      level: 1,
+      owned: false,
+      rarity: 'epic',
+      description: 'The glass slipper princess who transforms dreams into reality'
+    },
+    {
+      id: '5',
+      name: 'Belle',
+      type: 'shrouk',
+      hourlyYield: 60000,
+      price: 30000,
       level: 1,
       owned: false,
       rarity: 'legendary',
-      description: 'Ruler of the celestial kingdom among stars'
+      description: 'The beauty and the beast princess with wisdom and grace'
+    },
+    {
+      id: '6',
+      name: 'Shrouk',
+      type: 'ton',
+      hourlyYield: 200000,
+      price: 1,
+      level: 1,
+      owned: false,
+      rarity: 'legendary',
+      description: 'The ultimate princess of the SHROUK realm'
     }
   ]);
 
@@ -107,15 +128,15 @@ export const PrincessCards = () => {
         ? { 
             ...card, 
             level: card.level + 1, 
-            hourlyYield: card.hourlyYield * 1.2,
-            price: card.price * 2
+            hourlyYield: card.hourlyYield * 2, // Double the hourly yield
+            price: card.price * 2 // Double the price for next upgrade
           } 
         : card
     ));
     
     toast({
       title: "Princess Upgraded!",
-      description: "Hourly yield increased by 20%!",
+      description: "Hourly yield doubled!",
     });
   };
 

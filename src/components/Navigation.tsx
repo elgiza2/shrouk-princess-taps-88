@@ -7,8 +7,7 @@ import {
   Crown, 
   Wallet, 
   CheckSquare, 
-  Users, 
-  Settings 
+  Users
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -25,12 +24,11 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
     { id: 'wallet', icon: Wallet, label: t('wallet') },
     { id: 'tasks', icon: CheckSquare, label: t('tasks') },
     { id: 'referral', icon: Users, label: t('referral') },
-    { id: 'admin', icon: Settings, label: t('admin') },
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white/10 backdrop-blur-md border-t border-white/20 p-2">
-      <div className="max-w-md mx-auto grid grid-cols-6 gap-1">
+      <div className="max-w-md mx-auto grid grid-cols-5 gap-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;

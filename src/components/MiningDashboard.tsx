@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Zap, Coins, TrendingUp, Sparkles } from 'lucide-react';
+import { Zap, Coins, TrendingUp, Sparkles, ArrowUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const MiningDashboard = () => {
@@ -15,25 +15,24 @@ export const MiningDashboard = () => {
   const [shrougEarned, setShrougEarned] = useState(0);
   const [tonEarned, setTonEarned] = useState(0);
   const [tapValue, setTapValue] = useState(0.001);
-  const [lastTapTime, setLastTapTime] = useState(0);
   const [isTapping, setIsTapping] = useState(false);
+  const [tapUpgradeLevel, setTapUpgradeLevel] = useState(1);
 
-  const handleTap = () => {
-    const now = Date.now();
-    if (now - lastTapTime < 1000) return; // 1 second cooldown
+  // Improved tap handling - allows rapid tapping
+  const handleTap = (event: React.MouseEvent | React.TouchEvent) => {
+    event.preventDefault();
     
     if (tapsRemaining <= 0) {
       toast({
         title: "No taps remaining!",
-        description: "Please wait or upgrade your tap capacity.",
+        description: "Please refill or upgrade your tap capacity.",
         variant: "destructive"
       });
       return;
     }
 
     setIsTapping(true);
-    setTapsRemaining(prev => prev - 1);
-    setLastTapTime(now);
+    setTapsRemaining(prev => Math.max(0, prev - 1));
     
     // Random chance for SHROUK vs TON
     if (Math.random() > 0.7) {
@@ -50,24 +49,62 @@ export const MiningDashboard = () => {
       });
     }
 
-    setTimeout(() => setIsTapping(false), 200);
+    setTimeout(() => setIsTapping(false), 100);
   };
 
   const refillTaps = () => {
-    setTapsRemaining(maxTaps);
-    toast({
-      title: "Taps Refilled!",
-      description: "You're ready to mine again!",
-    });
+    if (shrougEarned >= 2000) {
+      setShrougEarned(prev => prev - 2000);
+      setTapsRemaining(maxTaps);
+      toast({
+        title: "Taps Refilled!",
+        description: "You're ready to mine again! (-2000 SHROUK)",
+      });
+    } else {
+      toast({
+        title: "Insufficient SHROUK!",
+        description: "You need 2000 SHROUK to refill taps.",
+        variant: "destructive"
+      });
+    }
   };
 
   const upgradeTapCapacity = () => {
-    setMaxTaps(prev => prev + 500);
-    setTapsRemaining(prev => prev + 500);
-    toast({
-      title: "Capacity Upgraded!",
-      description: `Max taps increased to ${maxTaps + 500}`,
-    });
+    const upgradeCost = tapUpgradeLevel * 5000;
+    if (shrougEarned >= upgradeCost) {
+      setShrougEarned(prev => prev - upgradeCost);
+      setMaxTaps(prev => prev + 1000);
+      setTapsRemaining(prev => prev + 1000);
+      setTapUpgradeLevel(prev => prev + 1);
+      toast({
+        title: "Capacity Upgraded!",
+        description: `Max taps increased by 1000! (-${upgradeCost} SHROUK)`,
+      });
+    } else {
+      toast({
+        title: "Insufficient SHROUK!",
+        description: `You need ${upgradeCost} SHROUK to upgrade capacity.`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const upgradeTapValue = () => {
+    const upgradeCost = tapValue * 10000;
+    if (shrougEarned >= upgradeCost) {
+      setShrougEarned(prev => prev - upgradeCost);
+      setTapValue(prev => prev * 1.5);
+      toast({
+        title: "Tap Value Upgraded!",
+        description: `Earn 50% more per tap! (-${upgradeCost.toFixed(0)} SHROUK)`,
+      });
+    } else {
+      toast({
+        title: "Insufficient SHROUK!",
+        description: `You need ${upgradeCost.toFixed(0)} SHROUK to upgrade tap value.`,
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -80,7 +117,7 @@ export const MiningDashboard = () => {
             <span className="text-sm font-medium">SHROUK</span>
           </div>
           <p className="text-2xl font-bold text-princess-pink">
-            {shrougEarned.toFixed(4)}
+            {shrougEarned.toFixed(0)}
           </p>
         </Card>
 
@@ -100,15 +137,17 @@ export const MiningDashboard = () => {
         <div className="mb-4">
           <div className="w-32 h-32 mx-auto mb-4 relative">
             <Button
-              onClick={handleTap}
+              onMouseDown={handleTap}
+              onTouchStart={handleTap}
               disabled={tapsRemaining <= 0}
-              className={`w-full h-full rounded-full princess-button text-xl font-bold transition-all duration-200 ${
-                isTapping ? 'animate-tap-bounce' : 'animate-pulse-glow'
+              className={`w-full h-full rounded-full princess-button text-xl font-bold transition-all duration-100 ${
+                isTapping ? 'animate-tap-bounce scale-95' : 'animate-pulse-glow'
               }`}
             >
               <div className="flex flex-col items-center">
                 <Zap className="w-8 h-8 mb-2" />
                 {t('mineNow')}
+                <span className="text-sm">+{tapValue.toFixed(4)}</span>
               </div>
             </Button>
             {isTapping && (
@@ -129,24 +168,37 @@ export const MiningDashboard = () => {
             <Progress value={(tapsRemaining / maxTaps) * 100} className="h-2" />
           </div>
 
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <Button
               onClick={refillTaps}
               variant="outline"
               size="sm"
-              className="flex-1 border-princess-pink text-princess-pink hover:bg-princess-pink hover:text-white"
+              className="border-princess-pink text-princess-pink hover:bg-princess-pink hover:text-white"
+              disabled={shrougEarned < 2000}
             >
-              Refill Taps
+              Refill (2K SHROUK)
             </Button>
             <Button
               onClick={upgradeTapCapacity}
               variant="outline"
               size="sm"
-              className="flex-1 border-princess-purple text-princess-purple hover:bg-princess-purple hover:text-white"
+              className="border-princess-purple text-princess-purple hover:bg-princess-purple hover:text-white"
+              disabled={shrougEarned < (tapUpgradeLevel * 5000)}
             >
-              {t('upgrade')}
+              <ArrowUp className="w-4 h-4 mr-1" />
+              +1K Taps
             </Button>
           </div>
+
+          <Button
+            onClick={upgradeTapValue}
+            variant="outline"
+            size="sm"
+            className="w-full border-princess-gold text-princess-gold hover:bg-princess-gold hover:text-white"
+            disabled={shrougEarned < (tapValue * 10000)}
+          >
+            Upgrade Tap Value (+50%)
+          </Button>
         </div>
       </Card>
 
