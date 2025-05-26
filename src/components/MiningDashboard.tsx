@@ -17,7 +17,7 @@ export const MiningDashboard = () => {
   const [tapUpgradeLevel, setTapUpgradeLevel] = useState(1);
   const [floatingCoins, setFloatingCoins] = useState<Array<{ id: number; x: number; y: number }>>([]);
 
-  // تحسين النقر للعمل مع اللمس والماوس
+  // Enhanced tap handling for both mouse and touch
   const handleTap = (event: React.MouseEvent | React.TouchEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -37,7 +37,7 @@ export const MiningDashboard = () => {
     setTapsRemaining(prev => Math.max(0, prev - 1));
     setShrougEarned(prev => prev + tapValue);
 
-    // إضافة تأثير العملة المتطايرة
+    // Add floating coin effect
     const coinId = Date.now();
     setFloatingCoins(prev => [...prev, { id: coinId, x, y }]);
     
@@ -82,7 +82,7 @@ export const MiningDashboard = () => {
             <img 
               src="/lovable-uploads/52649dfd-4d2c-4a70-89ec-dacd9a5e0c69.png" 
               alt="SHROUK" 
-              className="w-6 h-6"
+              className="w-8 h-8 rounded-full shadow-lg"
             />
             <span className="text-sm font-medium text-princess-pink">SHROUK</span>
           </div>
@@ -102,14 +102,17 @@ export const MiningDashboard = () => {
         </Card>
       </div>
 
-      {/* Mining Button */}
-      <Card className="glass-card p-6 text-center bg-gradient-to-br from-princess-pink/10 to-princess-purple/5">
-        <div className="mb-4">
-          <div className="w-40 h-40 mx-auto mb-4 relative">
+      {/* Enhanced Mining Button with Butterfly */}
+      <Card className="glass-card p-6 text-center bg-gradient-to-br from-princess-pink/10 to-princess-purple/5 relative overflow-hidden">
+        {/* Background Effects */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
+        
+        <div className="mb-4 relative">
+          <div className="w-48 h-48 mx-auto mb-4 relative">
             <div
-              className={`w-full h-full rounded-full relative cursor-pointer select-none transition-all duration-100 ${
-                isTapping ? 'scale-95' : 'hover:scale-105'
-              } ${tapsRemaining <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full h-full rounded-full relative cursor-pointer select-none transition-all duration-200 ${
+                isTapping ? 'scale-90' : 'hover:scale-110'
+              } ${tapsRemaining <= 0 ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
               onMouseDown={handleTap}
               onTouchStart={handleTap}
               style={{ 
@@ -119,51 +122,70 @@ export const MiningDashboard = () => {
                 touchAction: 'manipulation'
               }}
             >
-              <img 
-                src="/lovable-uploads/38746c32-f5c3-46e6-afdb-7387147dc905.png"
-                alt="Tap to mine"
-                className="w-full h-full object-cover rounded-full shadow-2xl"
-                draggable={false}
-              />
+              {/* Butterfly Image */}
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/20 to-white/10 rounded-full backdrop-blur-sm border-2 border-white/30 shadow-2xl">
+                <img 
+                  src="/lovable-uploads/993d23b2-f645-4ed2-b086-e757e259a948.png"
+                  alt="Tap to mine SHROUK"
+                  className="w-32 h-32 object-contain drop-shadow-2xl"
+                  draggable={false}
+                />
+              </div>
               
-              {/* تأثير التوهج */}
-              <div className={`absolute inset-0 rounded-full bg-princess-pink/20 ${isTapping ? 'animate-ping' : 'animate-pulse-glow'}`} />
+              {/* Enhanced Glow Effect */}
+              <div className={`absolute inset-0 rounded-full ${isTapping ? 'animate-ping bg-princess-pink/30' : 'animate-pulse-glow'}`} />
               
-              {/* النص المتراكب */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-white font-bold text-shadow">
-                <Zap className="w-8 h-8 mb-2 drop-shadow-lg" />
-                <span className="text-lg drop-shadow-lg">{t('mineNow')}</span>
-                <span className="text-sm drop-shadow-lg">+{tapValue.toFixed(4)}</span>
+              {/* Floating particles around the button */}
+              <div className="absolute inset-0 animate-spin" style={{ animationDuration: '20s' }}>
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-2 h-2 bg-princess-gold rounded-full opacity-60"
+                    style={{
+                      top: '50%',
+                      left: '50%',
+                      transform: `rotate(${i * 60}deg) translateY(-100px)`,
+                      animation: `sparkle 2s ease-in-out infinite ${i * 0.3}s`
+                    }}
+                  />
+                ))}
               </div>
 
-              {/* العملات المتطايرة */}
+              {/* Tap Indicator */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white font-bold text-shadow pointer-events-none">
+                <Zap className="w-6 h-6 mb-1 drop-shadow-lg animate-pulse" />
+                <span className="text-lg drop-shadow-lg bg-black/20 px-2 py-1 rounded-full backdrop-blur-sm">
+                  +{tapValue.toFixed(4)}
+                </span>
+              </div>
+
+              {/* Floating Coins */}
               {floatingCoins.map((coin) => (
                 <div
                   key={coin.id}
-                  className="absolute text-princess-gold font-bold text-lg animate-bounce pointer-events-none"
+                  className="absolute text-princess-gold font-bold text-xl animate-fade-out pointer-events-none z-10"
                   style={{
                     left: coin.x,
                     top: coin.y,
                     transform: 'translate(-50%, -50%)',
-                    animation: 'fade-out 1s ease-out forwards'
                   }}
                 >
-                  +{tapValue.toFixed(4)}
+                  +{tapValue.toFixed(4)} SHROUK
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
-            <div className="flex justify-between mb-1">
-              <span className="text-sm font-medium">{t('tapsRemaining')}</span>
+            <div className="flex justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">{t('tapsRemaining')}</span>
               <span className="text-sm font-bold text-princess-purple">{tapsRemaining}/{maxTaps}</span>
             </div>
             <Progress 
               value={(tapsRemaining / maxTaps) * 100} 
-              className="h-3 bg-white/20" 
+              className="h-4 bg-white/30 shadow-inner" 
             />
           </div>
 
@@ -172,7 +194,7 @@ export const MiningDashboard = () => {
               onClick={refillTaps}
               variant="outline"
               size="sm"
-              className="border-2 border-princess-pink text-princess-pink hover:bg-princess-pink hover:text-white font-bold shadow-lg transition-all duration-300"
+              className="border-2 border-princess-pink text-princess-pink hover:bg-princess-pink hover:text-white font-bold shadow-lg transition-all duration-300 hover:scale-105"
               disabled={shrougEarned < 2000}
             >
               <Zap className="w-4 h-4 mr-1" />
@@ -182,7 +204,7 @@ export const MiningDashboard = () => {
               onClick={upgradeTapCapacity}
               variant="outline"
               size="sm"
-              className="border-2 border-princess-purple text-princess-purple hover:bg-princess-purple hover:text-white font-bold shadow-lg transition-all duration-300"
+              className="border-2 border-princess-purple text-princess-purple hover:bg-princess-purple hover:text-white font-bold shadow-lg transition-all duration-300 hover:scale-105"
               disabled={shrougEarned < (tapUpgradeLevel * 5000)}
             >
               <ArrowUp className="w-4 h-4 mr-1" />
@@ -194,7 +216,7 @@ export const MiningDashboard = () => {
             onClick={upgradeTapValue}
             variant="outline"
             size="sm"
-            className="w-full border-2 border-princess-gold text-princess-gold hover:bg-princess-gold hover:text-black font-bold shadow-lg transition-all duration-300"
+            className="w-full border-2 border-princess-gold text-princess-gold hover:bg-princess-gold hover:text-black font-bold shadow-lg transition-all duration-300 hover:scale-105"
             disabled={shrougEarned < (tapValue * 10000)}
           >
             <Sparkles className="w-4 h-4 mr-1" />

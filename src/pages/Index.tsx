@@ -26,7 +26,7 @@ const Index = () => {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,107,157,0.1),transparent)] animate-pulse" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(166,99,204,0.1),transparent)] animate-pulse" style={{ animationDelay: '1s' }} />
 
-      {/* Header */}
+      {/* Enhanced Header */}
       <header className="relative z-10 p-4 bg-white/10 backdrop-blur-md border-b border-white/20 shadow-lg">
         <div className="flex items-center justify-between max-w-md mx-auto">
           <div className="flex items-center gap-3">
@@ -34,15 +34,23 @@ const Index = () => {
               <img 
                 src="/lovable-uploads/52649dfd-4d2c-4a70-89ec-dacd9a5e0c69.png" 
                 alt="SHROUK Logo" 
-                className="w-10 h-10 animate-pulse drop-shadow-lg"
+                className="w-12 h-12 rounded-full shadow-lg border-2 border-white/30"
               />
               <div className="absolute inset-0 bg-princess-gold/20 rounded-full animate-ping" />
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-princess-gold rounded-full animate-pulse shadow-lg" />
             </div>
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-princess-pink via-princess-purple to-princess-gold bg-clip-text text-transparent drop-shadow-sm">
                 SHROUK Mining
               </h1>
-              <p className="text-xs text-white/80 font-medium">Princess Mining Bot</p>
+              <p className="text-xs text-white/80 font-medium flex items-center gap-1">
+                <img 
+                  src="/lovable-uploads/993d23b2-f645-4ed2-b086-e757e259a948.png" 
+                  alt="Butterfly" 
+                  className="w-4 h-4"
+                />
+                Princess Mining Bot
+              </p>
             </div>
           </div>
           <LanguageSelector />
@@ -64,7 +72,7 @@ const Index = () => {
       
       {/* Enhanced Floating Sparkles */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {[...Array(8)].map((_, i) => (
+        {[...Array(12)].map((_, i) => (
           <Sparkles
             key={i}
             className="absolute text-princess-gold opacity-40 animate-sparkle"
@@ -82,6 +90,7 @@ const Index = () => {
       {/* Additional decorative elements */}
       <div className="fixed bottom-10 left-5 w-20 h-20 bg-princess-pink/10 rounded-full blur-xl animate-pulse pointer-events-none" />
       <div className="fixed top-20 right-5 w-16 h-16 bg-princess-purple/10 rounded-full blur-xl animate-pulse pointer-events-none" style={{ animationDelay: '2s' }} />
+      <div className="fixed top-1/2 left-2 w-12 h-12 bg-princess-gold/10 rounded-full blur-xl animate-pulse pointer-events-none" style={{ animationDelay: '3s' }} />
     </div>
   );
 };
