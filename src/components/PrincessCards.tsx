@@ -16,6 +16,7 @@ interface PrincessCard {
   owned: boolean;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   description: string;
+  image: string;
 }
 
 export const PrincessCards = () => {
@@ -31,7 +32,8 @@ export const PrincessCards = () => {
       level: 1,
       owned: false,
       rarity: 'common',
-      description: 'The iconic fashionista princess who brings style and prosperity'
+      description: 'The iconic fashionista princess who brings style and prosperity',
+      image: '/lovable-uploads/625f75fe-4623-4230-8125-6432e904ac65.png'
     },
     {
       id: '2',
@@ -42,7 +44,8 @@ export const PrincessCards = () => {
       level: 1,
       owned: false,
       rarity: 'rare',
-      description: 'The tower princess with magical golden hair'
+      description: 'The tower princess with magical golden hair',
+      image: '/lovable-uploads/56f5cff5-d5b5-4eaf-83e8-99fccd2f939b.png'
     },
     {
       id: '3',
@@ -53,7 +56,8 @@ export const PrincessCards = () => {
       level: 1,
       owned: false,
       rarity: 'epic',
-      description: 'The ice queen who controls frost and snow magic'
+      description: 'The ice queen who controls frost and snow magic',
+      image: '/lovable-uploads/0ba5cd8b-a167-49c0-808c-f0a06b2585da.png'
     },
     {
       id: '4',
@@ -64,7 +68,8 @@ export const PrincessCards = () => {
       level: 1,
       owned: false,
       rarity: 'epic',
-      description: 'The glass slipper princess who transforms dreams into reality'
+      description: 'The glass slipper princess who transforms dreams into reality',
+      image: '/lovable-uploads/52649dfd-4d2c-4a70-89ec-dacd9a5e0c69.png'
     },
     {
       id: '5',
@@ -75,7 +80,8 @@ export const PrincessCards = () => {
       level: 1,
       owned: false,
       rarity: 'legendary',
-      description: 'The beauty and the beast princess with wisdom and grace'
+      description: 'The beauty and the beast princess with wisdom and grace',
+      image: '/lovable-uploads/38746c32-f5c3-46e6-afdb-7387147dc905.png'
     },
     {
       id: '6',
@@ -86,7 +92,8 @@ export const PrincessCards = () => {
       level: 1,
       owned: false,
       rarity: 'legendary',
-      description: 'The ultimate princess of the SHROUK realm'
+      description: 'The ultimate princess of the SHROUK realm',
+      image: '/lovable-uploads/8649646d-e2d6-47ea-b298-ad95bd603ea0.png'
     }
   ]);
 
@@ -164,8 +171,12 @@ export const PrincessCards = () => {
           >
             <div className="flex items-start gap-4">
               {/* Princess Avatar */}
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-princess-pink to-princess-purple flex items-center justify-center relative overflow-hidden">
-                <Crown className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 rounded-full relative overflow-hidden border-2 border-princess-gold">
+                <img 
+                  src={card.image} 
+                  alt={card.name}
+                  className="w-full h-full object-cover"
+                />
                 {card.owned && (
                   <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
                     <Star className="w-6 h-6 text-green-500" />
