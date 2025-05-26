@@ -1,10 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Crown, Coins, Star, Sparkles } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 interface PrincessCard {
   id: string;
@@ -20,7 +20,6 @@ interface PrincessCard {
 
 export const PrincessCards = () => {
   const { t } = useLanguage();
-  const { toast } = useToast();
   
   const [cards, setCards] = useState<PrincessCard[]>([
     {
@@ -115,11 +114,6 @@ export const PrincessCards = () => {
     setCards(prev => prev.map(card => 
       card.id === cardId ? { ...card, owned: true } : card
     ));
-    
-    toast({
-      title: "Princess Card Purchased!",
-      description: "Your new princess is generating hourly rewards!",
-    });
   };
 
   const upgradeCard = (cardId: string) => {
@@ -133,11 +127,6 @@ export const PrincessCards = () => {
           } 
         : card
     ));
-    
-    toast({
-      title: "Princess Upgraded!",
-      description: "Hourly yield doubled!",
-    });
   };
 
   return (

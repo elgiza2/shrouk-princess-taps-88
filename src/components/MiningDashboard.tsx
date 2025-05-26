@@ -5,11 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Zap, Coins, TrendingUp, Sparkles, ArrowUp } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 export const MiningDashboard = () => {
   const { t } = useLanguage();
-  const { toast } = useToast();
   const [tapsRemaining, setTapsRemaining] = useState(1000);
   const [maxTaps, setMaxTaps] = useState(1000);
   const [shrougEarned, setShrougEarned] = useState(0);
@@ -18,54 +16,27 @@ export const MiningDashboard = () => {
   const [isTapping, setIsTapping] = useState(false);
   const [tapUpgradeLevel, setTapUpgradeLevel] = useState(1);
 
-  // Improved tap handling - allows rapid tapping
+  // محسن للنقر السريع
   const handleTap = (event: React.MouseEvent | React.TouchEvent) => {
     event.preventDefault();
     
     if (tapsRemaining <= 0) {
-      toast({
-        title: "No taps remaining!",
-        description: "Please refill or upgrade your tap capacity.",
-        variant: "destructive"
-      });
       return;
     }
 
     setIsTapping(true);
     setTapsRemaining(prev => Math.max(0, prev - 1));
     
-    // Random chance for SHROUK vs TON
-    if (Math.random() > 0.7) {
-      setTonEarned(prev => prev + tapValue * 0.1);
-      toast({
-        title: "TON Earned!",
-        description: `+${(tapValue * 0.1).toFixed(4)} TON`,
-      });
-    } else {
-      setShrougEarned(prev => prev + tapValue);
-      toast({
-        title: "SHROUK Earned!",
-        description: `+${tapValue.toFixed(4)} SHROUK`,
-      });
-    }
+    // ربح SHROUK فقط
+    setShrougEarned(prev => prev + tapValue);
 
-    setTimeout(() => setIsTapping(false), 100);
+    setTimeout(() => setIsTapping(false), 50);
   };
 
   const refillTaps = () => {
     if (shrougEarned >= 2000) {
       setShrougEarned(prev => prev - 2000);
       setTapsRemaining(maxTaps);
-      toast({
-        title: "Taps Refilled!",
-        description: "You're ready to mine again! (-2000 SHROUK)",
-      });
-    } else {
-      toast({
-        title: "Insufficient SHROUK!",
-        description: "You need 2000 SHROUK to refill taps.",
-        variant: "destructive"
-      });
     }
   };
 
@@ -76,16 +47,6 @@ export const MiningDashboard = () => {
       setMaxTaps(prev => prev + 1000);
       setTapsRemaining(prev => prev + 1000);
       setTapUpgradeLevel(prev => prev + 1);
-      toast({
-        title: "Capacity Upgraded!",
-        description: `Max taps increased by 1000! (-${upgradeCost} SHROUK)`,
-      });
-    } else {
-      toast({
-        title: "Insufficient SHROUK!",
-        description: `You need ${upgradeCost} SHROUK to upgrade capacity.`,
-        variant: "destructive"
-      });
     }
   };
 
@@ -94,16 +55,6 @@ export const MiningDashboard = () => {
     if (shrougEarned >= upgradeCost) {
       setShrougEarned(prev => prev - upgradeCost);
       setTapValue(prev => prev * 1.5);
-      toast({
-        title: "Tap Value Upgraded!",
-        description: `Earn 50% more per tap! (-${upgradeCost.toFixed(0)} SHROUK)`,
-      });
-    } else {
-      toast({
-        title: "Insufficient SHROUK!",
-        description: `You need ${upgradeCost.toFixed(0)} SHROUK to upgrade tap value.`,
-        variant: "destructive"
-      });
     }
   };
 
@@ -140,9 +91,10 @@ export const MiningDashboard = () => {
               onMouseDown={handleTap}
               onTouchStart={handleTap}
               disabled={tapsRemaining <= 0}
-              className={`w-full h-full rounded-full princess-button text-xl font-bold transition-all duration-100 ${
-                isTapping ? 'animate-tap-bounce scale-95' : 'animate-pulse-glow'
+              className={`w-full h-full rounded-full princess-button text-xl font-bold transition-all duration-75 ${
+                isTapping ? 'scale-95' : 'animate-pulse-glow'
               }`}
+              style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
             >
               <div className="flex flex-col items-center">
                 <Zap className="w-8 h-8 mb-2" />
