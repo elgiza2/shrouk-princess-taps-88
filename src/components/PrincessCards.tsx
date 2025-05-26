@@ -170,8 +170,8 @@ export const PrincessCards = () => {
             }`}
           >
             <div className="flex items-start gap-4">
-              {/* Princess Avatar */}
-              <div className="w-16 h-16 rounded-full relative overflow-hidden border-2 border-princess-gold">
+              {/* Princess Avatar - تم تكبير الحجم */}
+              <div className="w-24 h-24 rounded-full relative overflow-hidden border-2 border-princess-gold flex-shrink-0">
                 <img 
                   src={card.image} 
                   alt={card.name}
@@ -179,7 +179,7 @@ export const PrincessCards = () => {
                 />
                 {card.owned && (
                   <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
-                    <Star className="w-6 h-6 text-green-500" />
+                    <Star className="w-8 h-8 text-green-500" />
                   </div>
                 )}
                 <div className="absolute -top-1 -right-1">
