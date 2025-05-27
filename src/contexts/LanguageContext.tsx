@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface LanguageContextType {
@@ -69,7 +68,21 @@ const translations: { [key: string]: { [key: string]: string } } = {
     taskCompleted: 'Task Completed!',
     rewardReceived: 'Reward Received:',
     adminAccessGranted: 'Admin Access Granted!',
-    welcomeToAdminPanel: 'Welcome to Admin Panel'
+    welcomeToAdminPanel: 'Welcome to Admin Panel',
+    adminPanel: 'Admin Panel',
+    manageCardsAndSettings: 'Manage princess cards and app settings',
+    missingInformation: 'Missing Information',
+    fillAllFields: 'Please fill in all required fields.',
+    princessCardAdded: 'Princess Card Added!',
+    cardAddedToCollection: 'has been added to the collection.',
+    common: 'Common',
+    rare: 'Rare',
+    epic: 'Epic',
+    legendary: 'Legendary',
+    linkCopied: 'Link Copied!',
+    referralLinkCopied: 'Referral link copied to clipboard.',
+    joinSHROUKMining: 'Join SHROUK Mining',
+    mineCryptoWithCards: 'Mine crypto with beautiful princess cards!'
   },
   ar: {
     mining: 'التعدين',
@@ -119,7 +132,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
     getReferralLink: 'احصل على رابط الإحالة',
     openBot: 'فتح البوت',
     airdropReward: 'مكافأة الإيردروب',
-    bonusReward: 'مكافأة إضافية',
+    bonusReward: 'كافأة إضافية',
     rarity: 'الندرة',
     addNewCard: 'إضافة بطاقة جديدة',
     manageCards: 'إدارة البطاقات الموجودة',
@@ -130,7 +143,21 @@ const translations: { [key: string]: { [key: string]: string } } = {
     taskCompleted: 'تم إكمال المهمة!',
     rewardReceived: 'المكافأة المحصلة:',
     adminAccessGranted: 'تم منح صلاحية الأدمن!',
-    welcomeToAdminPanel: 'مرحباً بك في لوحة الأدمن'
+    welcomeToAdminPanel: 'مرحباً بك في لوحة الأدمن',
+    adminPanel: 'لوحة الأدمن',
+    manageCardsAndSettings: 'إدارة بطاقات الأميرات وإعدادات التطبيق',
+    missingInformation: 'معلومات مفقودة',
+    fillAllFields: 'يرجى ملء جميع الحقول المطلوبة.',
+    princessCardAdded: 'تم إضافة بطاقة الأميرة!',
+    cardAddedToCollection: 'تم إضافتها إلى المجموعة.',
+    common: 'عادية',
+    rare: 'نادرة',
+    epic: 'ملحمية',
+    legendary: 'أسطورية',
+    linkCopied: 'تم نسخ الرابط!',
+    referralLinkCopied: 'تم نسخ رابط الإحالة إلى الحافظة.',
+    joinSHROUKMining: 'انضم إلى تعدين شروق',
+    mineCryptoWithCards: 'قم بتعدين العملات المشفرة ببطاقات الأميرات الجميلة!'
   },
   ru: {
     mining: 'Майнинг',
@@ -191,7 +218,21 @@ const translations: { [key: string]: { [key: string]: string } } = {
     taskCompleted: 'Задание выполнено!',
     rewardReceived: 'Получена награда:',
     adminAccessGranted: 'Доступ администратора предоставлен!',
-    welcomeToAdminPanel: 'Добро пожаловать в панель администратора'
+    welcomeToAdminPanel: 'Добро пожаловать в панель администратора',
+    adminPanel: 'Панель администратора',
+    manageCardsAndSettings: 'Управление картами принцесс и настройками приложения',
+    missingInformation: 'Недостающая информация',
+    fillAllFields: 'Пожалуйста, заполните все обязательные поля.',
+    princessCardAdded: 'Карта принцессы добавлена!',
+    cardAddedToCollection: 'была добавлена в коллекцию.',
+    common: 'Обычная',
+    rare: 'Редкая',
+    epic: 'Эпическая',
+    legendary: 'Легендарная',
+    linkCopied: 'Ссылка скопирована!',
+    referralLinkCopied: 'Реферальная ссылка скопирована в буфер обмена.',
+    joinSHROUKMining: 'Присоединяйтесь к SHROUK Mining',
+    mineCryptoWithCards: 'Майните криптовалюту с красивыми картами принцесс!'
   }
 };
 

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,8 +26,8 @@ export const AdminPanel = () => {
   const handleAddCard = () => {
     if (!newCard.name || !newCard.hourlyYield || !newCard.price) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
+        title: t('missingInformation'),
+        description: t('fillAllFields'),
         variant: "destructive"
       });
       return;
@@ -35,8 +36,8 @@ export const AdminPanel = () => {
     console.log('Adding new card:', newCard);
     
     toast({
-      title: "Princess Card Added!",
-      description: `${newCard.name} has been added to the collection.`,
+      title: t('princessCardAdded'),
+      description: `${newCard.name} ${t('cardAddedToCollection')}`,
     });
     
     setNewCard({
@@ -54,8 +55,8 @@ export const AdminPanel = () => {
     <div className="space-y-6">
       {/* Admin Header */}
       <Card className="glass-card p-4">
-        <h2 className="font-bold text-xl mb-2">{t('admin')} Panel</h2>
-        <p className="text-sm text-gray-600">Manage princess cards and app settings</p>
+        <h2 className="font-bold text-xl mb-2">{t('adminPanel')}</h2>
+        <p className="text-sm text-gray-600">{t('manageCardsAndSettings')}</p>
       </Card>
 
       {/* Add New Card */}
@@ -95,10 +96,10 @@ export const AdminPanel = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="common">Common</SelectItem>
-                    <SelectItem value="rare">Rare</SelectItem>
-                    <SelectItem value="epic">Epic</SelectItem>
-                    <SelectItem value="legendary">Legendary</SelectItem>
+                    <SelectItem value="common">{t('common')}</SelectItem>
+                    <SelectItem value="rare">{t('rare')}</SelectItem>
+                    <SelectItem value="epic">{t('epic')}</SelectItem>
+                    <SelectItem value="legendary">{t('legendary')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

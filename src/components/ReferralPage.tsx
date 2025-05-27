@@ -24,16 +24,16 @@ export const ReferralPage = () => {
   const copyReferralLink = () => {
     navigator.clipboard.writeText(referralLink);
     toast({
-      title: "Link Copied!",
-      description: "Referral link copied to clipboard."
+      title: t('linkCopied'),
+      description: t('referralLinkCopied')
     });
   };
 
   const shareReferralLink = () => {
     if (navigator.share) {
       navigator.share({
-        title: 'Join SHROUK Mining',
-        text: 'Mine crypto with beautiful princess cards!',
+        title: t('joinSHROUKMining'),
+        text: t('mineCryptoWithCards'),
         url: referralLink
       });
     } else {
