@@ -62,7 +62,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
     rarity: 'Rarity',
     addNewCard: 'Add New Card',
     manageCards: 'Manage Existing Cards',
-    // Missing translations added
     botWillSendLink: 'The bot will send you your referral link',
     youWillGet: 'You will get',
     atAirdropTime: 'at airdrop time!',
@@ -124,7 +123,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
     rarity: 'الندرة',
     addNewCard: 'إضافة بطاقة جديدة',
     manageCards: 'إدارة البطاقات الموجودة',
-    // الترجمات المفقودة
     botWillSendLink: 'سيرسل لك البوت رابط الإحالة الخاص بك',
     youWillGet: 'ستحصل على',
     atAirdropTime: 'وقت الإيردروب!',
@@ -186,7 +184,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
     rarity: 'Редкость',
     addNewCard: 'Добавить новую карту',
     manageCards: 'Управление существующими картами',
-    // Недостающие переводы
     botWillSendLink: 'Бот отправит вам вашу реферальную ссылку',
     youWillGet: 'Вы получите',
     atAirdropTime: 'во время аирдропа!',
@@ -203,11 +200,11 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     const savedLang = localStorage.getItem('language');
-    if (savedLang) {
+    if (savedLang && ['ar', 'en', 'ru'].includes(savedLang)) {
       setLanguage(savedLang);
     } else {
       const browserLang = navigator.language.split('-')[0];
-      if (translations[browserLang]) {
+      if (['ar', 'en', 'ru'].includes(browserLang)) {
         setLanguage(browserLang);
       } else {
         setLanguage('ar');
@@ -216,8 +213,10 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const handleSetLanguage = (lang: string) => {
-    setLanguage(lang);
-    localStorage.setItem('language', lang);
+    if (['ar', 'en', 'ru'].includes(lang)) {
+      setLanguage(lang);
+      localStorage.setItem('language', lang);
+    }
   };
 
   const t = (key: string): string => {

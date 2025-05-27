@@ -11,18 +11,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Globe } from 'lucide-react';
 
 const languages = [
-  { code: 'en', name: 'English', flag: '🇺🇸' },
   { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+  { code: 'en', name: 'English', flag: '🇺🇸' },
   { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
-  { code: 'zh', name: '中文', flag: '🇨🇳' },
-  { code: 'ja', name: '日本語', flag: '🇯🇵' },
-  { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
-  { code: 'pt', name: 'Português', flag: '🇧🇷' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'uk', name: 'Українська', flag: '🇺🇦' },
 ];
 
 export const LanguageSelector = () => {
