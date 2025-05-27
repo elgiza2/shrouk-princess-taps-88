@@ -131,19 +131,17 @@ export const PrincessCards = () => {
   };
   return <div className="space-y-6">
       {/* Total Hourly Earnings */}
-      <Card className="glass-card p-4 bg-gradient-to-r from-princess-pink/20 to-princess-purple/20 border border-princess-gold/30">
+      <Card className="glass-card p-4 bg-gradient-to-r from-princess-pink/20 to-princess-purple/20 border border-princess-gold/30 px-0 py-[2px]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-princess-gold animate-pulse" />
-            <span className="font-bold text-lg">{t('hourlyEarnings')}</span>
+            <span className="font-bold mx-0 text-base px-[9px]">{t('hourlyEarnings')}</span>
           </div>
           <div className="text-right">
-            <p className="text-lg font-bold text-princess-pink">
+            <p className="font-bold text-princess-pink text-sm px-[12px]">
               +{cards.filter(c => c.owned && c.type === 'shrouk').reduce((sum, c) => sum + c.hourlyYield, 0).toFixed(4)} SHROUK/h
             </p>
-            <p className="text-lg font-bold text-blue-500">
-              +{cards.filter(c => c.owned && c.type === 'ton').reduce((sum, c) => sum + c.hourlyYield, 0).toFixed(4)} TON/h
-            </p>
+            
           </div>
         </div>
       </Card>
