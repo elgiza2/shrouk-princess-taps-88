@@ -131,7 +131,7 @@ export const PrincessCards = () => {
   };
   return <div className="space-y-6">
       {/* Total Hourly Earnings */}
-      <Card className="glass-card p-4 bg-gradient-to-r from-princess-pink/20 to-princess-purple/20 border border-princess-gold/30 px-0 py-[2px]">
+      <Card className="glass-card p-4 bg-gradient-to-r from-princess-pink/20 to-princess-purple/20 border border-princess-gold/30 px-0 py-[2px] my-[13px]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-princess-gold animate-pulse" />
