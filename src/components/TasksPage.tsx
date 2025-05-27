@@ -103,8 +103,8 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
 
     const task = tasks.find(t => t.id === taskId);
     toast({
-      title: "تم إكمال المهمة!",
-      description: `المكافأة المحصلة: ${task?.reward}`
+      title: t('taskCompleted'),
+      description: `${t('rewardReceived')} ${task?.reward}`
     });
   };
 
@@ -116,8 +116,8 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
       setAdminTapCount(0);
       onAdminAccess?.();
       toast({
-        title: "تم منح صلاحية الأدمن!",
-        description: "مرحباً بك في لوحة الأدمن"
+        title: t('adminAccessGranted'),
+        description: t('welcomeToAdminPanel')
       });
     }
   };

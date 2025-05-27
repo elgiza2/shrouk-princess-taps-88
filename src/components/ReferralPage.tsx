@@ -112,7 +112,7 @@ export const ReferralPage = () => {
             <div className="w-6 h-6 bg-princess-gold text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
             <div>
               <p className="text-sm font-medium">{t('getReferralLink')}</p>
-              <p className="text-xs text-gray-600">سيرسل لك البوت رابط الإحالة الخاص بك</p>
+              <p className="text-xs text-gray-600">{t('botWillSendLink')}</p>
             </div>
           </div>
         </div>
@@ -133,10 +133,10 @@ export const ReferralPage = () => {
         <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-lg text-center">
           <div className="text-2xl font-bold text-purple-600 mb-2">50%</div>
           <p className="text-sm text-gray-700">
-            ستحصل على <span className="font-bold">50% {t('bonusReward')}</span> وقت الإيردروب!
+            {t('youWillGet')} <span className="font-bold">50% {t('bonusReward')}</span> {t('atAirdropTime')}
           </p>
           <p className="text-xs text-gray-600 mt-2">
-            كلما دعوت أصدقاء أكثر، كلما زادت مكافآتك
+            {t('moreInvitesMoreRewards')}
           </p>
         </div>
       </Card>

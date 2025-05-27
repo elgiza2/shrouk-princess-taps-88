@@ -42,7 +42,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
     fairy: 'Fairy',
     queen: 'Queen',
     empress: 'Empress',
-    // إضافة الترجمات المفقودة
     taskCenter: 'Tasks Center',
     dailyTasks: 'Daily Tasks',
     mainTasks: 'Main Tasks',
@@ -62,7 +61,16 @@ const translations: { [key: string]: { [key: string]: string } } = {
     bonusReward: 'Bonus Reward',
     rarity: 'Rarity',
     addNewCard: 'Add New Card',
-    manageCards: 'Manage Existing Cards'
+    manageCards: 'Manage Existing Cards',
+    // Missing translations added
+    botWillSendLink: 'The bot will send you your referral link',
+    youWillGet: 'You will get',
+    atAirdropTime: 'at airdrop time!',
+    moreInvitesMoreRewards: 'The more friends you invite, the more rewards you get',
+    taskCompleted: 'Task Completed!',
+    rewardReceived: 'Reward Received:',
+    adminAccessGranted: 'Admin Access Granted!',
+    welcomeToAdminPanel: 'Welcome to Admin Panel'
   },
   ar: {
     mining: 'التعدين',
@@ -96,7 +104,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
     fairy: 'جنية',
     queen: 'ملكة',
     empress: 'إمبراطورة',
-    // إضافة الترجمات المفقودة
     taskCenter: 'مركز المهام',
     dailyTasks: 'المهام اليومية',
     mainTasks: 'المهام الرئيسية',
@@ -116,7 +123,16 @@ const translations: { [key: string]: { [key: string]: string } } = {
     bonusReward: 'مكافأة إضافية',
     rarity: 'الندرة',
     addNewCard: 'إضافة بطاقة جديدة',
-    manageCards: 'إدارة البطاقات الموجودة'
+    manageCards: 'إدارة البطاقات الموجودة',
+    // الترجمات المفقودة
+    botWillSendLink: 'سيرسل لك البوت رابط الإحالة الخاص بك',
+    youWillGet: 'ستحصل على',
+    atAirdropTime: 'وقت الإيردروب!',
+    moreInvitesMoreRewards: 'كلما دعوت أصدقاء أكثر، كلما زادت مكافآتك',
+    taskCompleted: 'تم إكمال المهمة!',
+    rewardReceived: 'المكافأة المحصلة:',
+    adminAccessGranted: 'تم منح صلاحية الأدمن!',
+    welcomeToAdminPanel: 'مرحباً بك في لوحة الأدمن'
   },
   ru: {
     mining: 'Майнинг',
@@ -150,7 +166,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
     fairy: 'Фея',
     queen: 'Королева',
     empress: 'Императрица',
-    // إضافة الترجمات المفقودة
     taskCenter: 'Центр заданий',
     dailyTasks: 'Ежедневные задания',
     mainTasks: 'Основные задания',
@@ -170,24 +185,32 @@ const translations: { [key: string]: { [key: string]: string } } = {
     bonusReward: 'Бонусная награда',
     rarity: 'Редкость',
     addNewCard: 'Добавить новую карту',
-    manageCards: 'Управление существующими картами'
+    manageCards: 'Управление существующими картами',
+    // Недостающие переводы
+    botWillSendLink: 'Бот отправит вам вашу реферальную ссылку',
+    youWillGet: 'Вы получите',
+    atAirdropTime: 'во время аирдропа!',
+    moreInvitesMoreRewards: 'Чем больше друзей пригласите, тем больше наград получите',
+    taskCompleted: 'Задание выполнено!',
+    rewardReceived: 'Получена награда:',
+    adminAccessGranted: 'Доступ администратора предоставлен!',
+    welcomeToAdminPanel: 'Добро пожаловать в панель администратора'
   }
 };
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState('ar'); // تغيير اللغة الافتراضية للعربية
+  const [language, setLanguage] = useState('ar');
 
   useEffect(() => {
     const savedLang = localStorage.getItem('language');
     if (savedLang) {
       setLanguage(savedLang);
     } else {
-      // Auto-detect language
       const browserLang = navigator.language.split('-')[0];
       if (translations[browserLang]) {
         setLanguage(browserLang);
       } else {
-        setLanguage('ar'); // الافتراضي العربية
+        setLanguage('ar');
       }
     }
   }, []);
