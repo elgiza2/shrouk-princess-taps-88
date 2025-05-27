@@ -12,6 +12,18 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  reward: string | null;
+  completed: boolean | null;
+  category: string | null;
+  link: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 export const AdminPanel = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -39,7 +51,7 @@ export const AdminPanel = () => {
         .select('*')
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return data || [];
+      return data as Task[] || [];
     },
   });
 
