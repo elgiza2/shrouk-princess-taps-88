@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,26 +53,44 @@ export const WalletSection = () => {
     enabled: !!wallet?.account?.address,
   });
 
-  // Initialize user balance mutation
+  // Initialize user balance mutation with proper error handling
   const initializeBalanceMutation = useMutation({
     mutationFn: async () => {
       if (!wallet?.account?.address) throw new Error('No wallet connected');
       
-      // Initialize balance if not exists
+      // Initialize balance if not exists using upsert
       if (!userBalance) {
-        await supabase.from('user_balances').insert({
+        const { error } = await supabase.from('user_balances').upsert({
           user_address: wallet.account.address,
           shrouk_balance: 0,
           ton_balance: 0
+        }, {
+          onConflict: 'user_address'
         });
+        
+        if (error) {
+          console.error('Balance initialization error:', error);
+          throw error;
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-balance'] });
     },
+    onError: (error) => {
+      console.error('Balance initialization failed:', error);
+      // Don't show error for duplicate key violations as they're expected
+      if (!error.message.includes('duplicate key')) {
+        toast({
+          title: t('initializationError'),
+          description: t('couldNotInitializeBalance'),
+          variant: "destructive"
+        });
+      }
+    },
   });
 
-  // Fetch real TON balance mutation
+  // Fetch real TON balance mutation with better error handling
   const fetchRealTonBalanceMutation = useMutation({
     mutationFn: async () => {
       if (!wallet?.account?.address) throw new Error('No wallet connected');
@@ -94,13 +111,15 @@ export const WalletSection = () => {
       
       const realBalance = parseFloat(data.result) / 1e9;
       
-      // Update TON balance in database
+      // Update TON balance in database using upsert
       await supabase
         .from('user_balances')
         .upsert({
           user_address: wallet.account.address,
           ton_balance: realBalance,
           shrouk_balance: userBalance?.shrouk_balance || 0
+        }, {
+          onConflict: 'user_address'
         });
       
       return realBalance;
@@ -112,7 +131,8 @@ export const WalletSection = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['user-balance'] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('TON balance fetch error:', error);
       toast({
         title: t('errorFetchingBalance'),
         description: t('couldNotFetchBalance'),
@@ -121,7 +141,7 @@ export const WalletSection = () => {
     },
   });
 
-  // Send TON transaction mutation
+  // Send TON transaction mutation with better error handling
   const sendTransactionMutation = useMutation({
     mutationFn: async ({ toAddress, amount }: { toAddress: string; amount: number }) => {
       if (!wallet?.account?.address) throw new Error('No wallet connected');
@@ -162,7 +182,8 @@ export const WalletSection = () => {
         fetchRealTonBalanceMutation.mutate();
       }, 2000);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Transaction send error:', error);
       toast({
         title: t('transactionFailed'),
         description: t('transactionFailedDescription'),

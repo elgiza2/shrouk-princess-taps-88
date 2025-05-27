@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,34 +54,59 @@ export const MiningDashboard = () => {
     enabled: !!wallet?.account?.address,
   });
 
-  // Initialize user data mutation
+  // Initialize user data mutation with proper error handling
   const initializeUserMutation = useMutation({
     mutationFn: async () => {
       if (!wallet?.account?.address) throw new Error('No wallet connected');
       
-      // Initialize tap points if not exists
+      // Initialize tap points if not exists using upsert
       if (!tapData) {
-        await supabase.from('user_tap_points').insert({
+        const { error: tapError } = await supabase.from('user_tap_points').upsert({
           user_address: wallet.account.address,
           tap_points: 0,
           max_taps: 1000,
           tap_value: 0.001,
           tap_upgrade_level: 1,
+        }, {
+          onConflict: 'user_address'
         });
+        
+        if (tapError) {
+          console.error('Error initializing tap points:', tapError);
+          throw tapError;
+        }
       }
       
-      // Initialize balance if not exists
+      // Initialize balance if not exists using upsert
       if (!userBalance) {
-        await supabase.from('user_balances').insert({
+        const { error: balanceError } = await supabase.from('user_balances').upsert({
           user_address: wallet.account.address,
           shrouk_balance: 0,
           ton_balance: 0
+        }, {
+          onConflict: 'user_address'
         });
+        
+        if (balanceError) {
+          console.error('Error initializing balance:', balanceError);
+          throw balanceError;
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-tap-points'] });
       queryClient.invalidateQueries({ queryKey: ['user-balance'] });
+    },
+    onError: (error) => {
+      console.error('Initialization error:', error);
+      // Don't show error toast for duplicate key errors as they're expected
+      if (!error.message.includes('duplicate key')) {
+        toast({
+          title: t('initializationError'),
+          description: t('couldNotInitializeAccount'),
+          variant: "destructive"
+        });
+      }
     },
   });
 
@@ -93,7 +117,7 @@ export const MiningDashboard = () => {
     }
   }, [wallet?.account?.address, tapData, userBalance]);
 
-  // Tap mutation
+  // Tap mutation with better error handling
   const tapMutation = useMutation({
     mutationFn: async () => {
       if (!wallet?.account?.address || !tapData) throw new Error('No data available');
@@ -123,13 +147,15 @@ export const MiningDashboard = () => {
       
       if (tapError) throw tapError;
       
-      // Update balance
+      // Update balance using upsert to avoid conflicts
       const { error: balanceError } = await supabase
         .from('user_balances')
         .upsert({
           user_address: wallet.account.address,
           shrouk_balance: newTapPoints,
           ton_balance: userBalance?.ton_balance || 0
+        }, {
+          onConflict: 'user_address'
         });
       
       if (balanceError) throw balanceError;
@@ -151,6 +177,7 @@ export const MiningDashboard = () => {
     },
     onError: (error: any) => {
       if (error.message !== 'No taps remaining') {
+        console.error('Tap error:', error);
         toast({
           title: t('tapError'),
           description: t('tapErrorDescription'),
@@ -172,18 +199,23 @@ export const MiningDashboard = () => {
         throw new Error('Insufficient balance');
       }
       
-      // Update balance
+      // Update balance using upsert
       const { error: balanceError } = await supabase
         .from('user_balances')
-        .update({ shrouk_balance: currentBalance - cost })
-        .eq('user_address', wallet.account.address);
+        .upsert({ 
+          user_address: wallet.account.address,
+          shrouk_balance: currentBalance - cost,
+          ton_balance: userBalance.ton_balance || 0
+        }, {
+          onConflict: 'user_address'
+        });
       
       if (balanceError) throw balanceError;
       
       // Reset tap points to allow full taps again
       const { error: tapError } = await supabase
         .from('user_tap_points')
-        .update({ tap_points: (userBalance.shrouk_balance - cost) })
+        .update({ tap_points: (currentBalance - cost) })
         .eq('user_address', wallet.account.address);
       
       if (tapError) throw tapError;
@@ -208,6 +240,7 @@ export const MiningDashboard = () => {
       queryClient.invalidateQueries({ queryKey: ['user-balance'] });
     },
     onError: (error: any) => {
+      console.error('Refill error:', error);
       toast({
         title: t('refillError'),
         description: error.message === 'Insufficient balance' ? t('insufficientBalance') : t('refillErrorDescription'),
@@ -228,11 +261,16 @@ export const MiningDashboard = () => {
         throw new Error('Insufficient balance');
       }
       
-      // Update balance
+      // Update balance using upsert
       const { error: balanceError } = await supabase
         .from('user_balances')
-        .update({ shrouk_balance: currentBalance - cost })
-        .eq('user_address', wallet.account.address);
+        .upsert({ 
+          user_address: wallet.account.address,
+          shrouk_balance: currentBalance - cost,
+          ton_balance: userBalance.ton_balance || 0
+        }, {
+          onConflict: 'user_address'
+        });
       
       if (balanceError) throw balanceError;
       
@@ -268,6 +306,7 @@ export const MiningDashboard = () => {
       queryClient.invalidateQueries({ queryKey: ['user-balance'] });
     },
     onError: (error: any) => {
+      console.error('Capacity upgrade error:', error);
       toast({
         title: t('upgradeError'),
         description: error.message === 'Insufficient balance' ? t('insufficientBalance') : t('upgradeErrorDescription'),
@@ -288,11 +327,16 @@ export const MiningDashboard = () => {
         throw new Error('Insufficient balance');
       }
       
-      // Update balance
+      // Update balance using upsert
       const { error: balanceError } = await supabase
         .from('user_balances')
-        .update({ shrouk_balance: currentBalance - cost })
-        .eq('user_address', wallet.account.address);
+        .upsert({ 
+          user_address: wallet.account.address,
+          shrouk_balance: currentBalance - cost,
+          ton_balance: userBalance.ton_balance || 0
+        }, {
+          onConflict: 'user_address'
+        });
       
       if (balanceError) throw balanceError;
       
@@ -327,6 +371,7 @@ export const MiningDashboard = () => {
       queryClient.invalidateQueries({ queryKey: ['user-balance'] });
     },
     onError: (error: any) => {
+      console.error('Value upgrade error:', error);
       toast({
         title: t('upgradeError'),
         description: error.message === 'Insufficient balance' ? t('insufficientBalance') : t('upgradeErrorDescription'),
