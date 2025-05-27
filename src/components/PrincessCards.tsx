@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Crown, Coins, Star, Sparkles, Loader2, ShoppingCart, TrendingUp, Zap, Gem } from 'lucide-react';
+import { Crown, Coins, Star, Sparkles, Loader2, ShoppingCart, TrendingUp, Zap, Gem, Gift } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTonWallet } from '@tonconnect/ui-react';
 import { useToast } from '@/hooks/use-toast';
@@ -498,90 +498,108 @@ export const PrincessCards = () => {
                     </div>
                   </div>
 
-                  {/* Enhanced Action Buttons */}
-                  <div className="pt-2 space-y-2">
+                  {/* New Enhanced Action Buttons */}
+                  <div className="pt-3 space-y-3">
                     {!isOwned ? (
-                      /* Purchase Button with enhanced design */
+                      /* Enhanced Purchase Button */
                       <div className="relative group">
-                        <div className={`absolute inset-0 rounded-lg blur opacity-25 group-hover:opacity-40 transition-opacity duration-300 ${
-                          canAffordCard ? 'bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500' : 'bg-gray-400'
+                        {/* Animated background glow */}
+                        <div className={`absolute -inset-1 rounded-xl opacity-75 group-hover:opacity-100 transition-all duration-500 animate-pulse ${
+                          canAffordCard && wallet?.account?.address 
+                            ? 'bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 blur-sm' 
+                            : 'bg-gray-400 blur-sm'
                         }`}></div>
+                        
                         <Button 
                           onClick={() => buyCardMutation.mutate({ cardId: card.id, price: card.price, currency: card.currency })}
-                          size="sm" 
+                          size="lg"
                           disabled={buyCardMutation.isPending || !canAffordCard || !wallet?.account?.address} 
-                          className={`relative w-full h-12 font-bold text-sm transition-all duration-300 ${
+                          className={`relative w-full h-14 font-bold text-sm transition-all duration-300 border-0 ${
                             canAffordCard && wallet?.account?.address
-                              ? 'bg-gradient-to-r from-pink-600 via-purple-600 to-pink-600 hover:from-pink-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] border-0 group-hover:shadow-pink-500/30' 
-                              : 'bg-gray-300/80 text-gray-600 cursor-not-allowed border border-gray-400'
+                              ? 'bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-500 hover:via-purple-500 hover:to-indigo-500 text-white shadow-2xl hover:shadow-purple-500/50 hover:scale-[1.02] active:scale-[0.98] group-hover:brightness-110' 
+                              : 'bg-gradient-to-r from-gray-400 to-gray-500 text-gray-200 cursor-not-allowed shadow-lg'
                           }`}
                         >
                           {buyCardMutation.isPending ? (
-                            <div className="flex items-center gap-2">
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>جاري الشراء...</span>
+                            <div className="flex items-center gap-3">
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              <span className="text-base">جاري الشراء...</span>
                             </div>
                           ) : !wallet?.account?.address ? (
-                            <div className="flex items-center gap-2">
-                              <Zap className="w-4 h-4" />
-                              <span>اربط المحفظة أولاً</span>
+                            <div className="flex items-center gap-3">
+                              <Zap className="w-5 h-5" />
+                              <span className="text-base">اربط المحفظة أولاً</span>
                             </div>
                           ) : !canAffordCard ? (
-                            <div className="flex items-center gap-2">
-                              <Coins className="w-4 h-4" />
-                              <span>رصيد غير كافي</span>
+                            <div className="flex items-center gap-3">
+                              <Coins className="w-5 h-5" />
+                              <span className="text-base">رصيد غير كافي</span>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2">
-                              <Gem className="w-4 h-4" />
-                              <span>شراء - {card.price.toLocaleString()} {card.currency}</span>
+                            <div className="flex items-center gap-3">
+                              <Gift className="w-5 h-5" />
+                              <span className="text-base font-extrabold">شراء الآن - {card.price.toLocaleString()} {card.currency}</span>
+                              <Sparkles className="w-4 h-4 animate-pulse" />
                             </div>
                           )}
                         </Button>
                       </div>
                     ) : (
-                      /* Upgrade Button with enhanced design */
+                      /* Enhanced Upgrade Button */
                       <div className="relative group">
-                        <div className={`absolute inset-0 rounded-lg blur opacity-25 group-hover:opacity-40 transition-opacity duration-300 ${
-                          canAffordUpgrade ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500' : 'bg-gray-400'
+                        {/* Animated background glow */}
+                        <div className={`absolute -inset-1 rounded-xl opacity-75 group-hover:opacity-100 transition-all duration-500 ${
+                          canAffordUpgrade && wallet?.account?.address 
+                            ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 blur-sm animate-pulse' 
+                            : 'bg-gray-400 blur-sm'
                         }`}></div>
+                        
                         <Button 
                           onClick={() => upgradeCardMutation.mutate({ cardId: card.id, upgradeCost })}
-                          size="sm" 
-                          variant="outline" 
-                          className={`relative w-full h-12 text-sm font-bold transition-all duration-300 ${
+                          size="lg"
+                          className={`relative w-full h-14 text-sm font-bold transition-all duration-300 border-0 ${
                             canAffordUpgrade && wallet?.account?.address
-                              ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white border-0 shadow-lg hover:shadow-xl hover:scale-[1.02] group-hover:shadow-emerald-500/30'
-                              : 'bg-gray-200/80 text-gray-600 border-gray-400 cursor-not-allowed'
+                              ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white shadow-2xl hover:shadow-emerald-500/50 hover:scale-[1.02] active:scale-[0.98] group-hover:brightness-110'
+                              : 'bg-gradient-to-r from-gray-400 to-gray-500 text-gray-200 cursor-not-allowed shadow-lg'
                           }`}
                           disabled={upgradeCardMutation.isPending || !canAffordUpgrade || !wallet?.account?.address}
                         >
                           {upgradeCardMutation.isPending ? (
-                            <div className="flex items-center gap-2">
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>جاري الترقية...</span>
+                            <div className="flex items-center gap-3">
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              <span className="text-base">جاري الترقية...</span>
                             </div>
                           ) : !canAffordUpgrade ? (
-                            <div className="flex items-center gap-2">
-                              <Coins className="w-4 h-4" />
-                              <span>رصيد غير كافي للترقية</span>
+                            <div className="flex items-center gap-3">
+                              <Coins className="w-5 h-5" />
+                              <span className="text-base">رصيد غير كافي للترقية</span>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2">
-                              <TrendingUp className="w-4 h-4" />
-                              <span>ترقية → Lv.{ownedCard.level + 1} ({upgradeCost.toLocaleString()} SHROUK)</span>
+                            <div className="flex items-center gap-3">
+                              <TrendingUp className="w-5 h-5" />
+                              <span className="text-base font-extrabold">ترقية → المستوى {ownedCard.level + 1}</span>
+                              <div className="flex items-center gap-1 text-sm">
+                                <span>({upgradeCost.toLocaleString()} SHROUK)</span>
+                                <Star className="w-4 h-4 animate-pulse" />
+                              </div>
                             </div>
                           )}
                         </Button>
                       </div>
                     )}
                     
-                    {/* Additional info for owned cards */}
+                    {/* Enhanced Status info for owned cards */}
                     {isOwned && (
-                      <div className="text-xs text-center p-2 rounded-lg bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-300">
-                        <div className="flex items-center justify-center gap-1">
-                          <Star className="w-3 h-3" />
-                          <span>مملوكة - المستوى {ownedCard.level}</span>
+                      <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 p-3">
+                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-100/50 to-teal-100/50 animate-pulse"></div>
+                        <div className="relative flex items-center justify-center gap-2 text-emerald-700">
+                          <Crown className="w-4 h-4 text-emerald-600" />
+                          <span className="text-sm font-bold">مملوكة - المستوى {ownedCard.level}</span>
+                          <div className="flex items-center gap-1">
+                            {[...Array(Math.min(ownedCard.level, 5))].map((_, i) => (
+                              <Star key={i} className="w-3 h-3 text-emerald-500 fill-current" />
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}
