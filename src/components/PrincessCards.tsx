@@ -3,8 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Crown, Coins, Star, Sparkles, TrendingUp } from 'lucide-react';
-
+import { Crown, Coins, Star, Sparkles } from 'lucide-react';
 interface PrincessCard {
   id: string;
   name: string;
@@ -182,27 +181,17 @@ export const PrincessCards = () => {
                 <p className="text-sm text-gray-600 leading-relaxed">{card.description}</p>
                 
                 {/* Stats - محسن */}
-                <div className="bg-gradient-to-r from-white/30 to-white/10 rounded-xl p-4 space-y-3 border border-white/20 backdrop-blur-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center">
-                        <TrendingUp className="w-3 h-3 text-white" />
-                      </div>
-                      <span className="text-sm font-medium text-gray-700">Hourly Yield</span>
-                    </div>
-                    <span className="font-bold text-lg text-green-600">
+                <div className="bg-white/20 rounded-lg p-3 space-y-2 px-0 py-0">
+                  <div className="flex items-center gap-2">
+                    
+                    <span className="py-0 font-semibold text-xs mx-0 px-[4px] my-0">
                       {card.hourlyYield.toFixed(4)} {card.type.toUpperCase()}/h
                     </span>
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center">
-                        <Coins className="w-3 h-3 text-white" />
-                      </div>
-                      <span className="text-sm font-medium text-gray-700">Price</span>
-                    </div>
-                    <span className="font-bold text-lg text-blue-600">
+                  <div className="flex items-center gap-2">
+                    
+                    <span className="font-semibold text-xs">
                       {card.price.toFixed(2)} {card.type.toUpperCase()}
                     </span>
                   </div>
