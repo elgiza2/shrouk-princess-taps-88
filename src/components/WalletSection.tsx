@@ -335,15 +335,7 @@ export const WalletSection = () => {
             <TonConnectButton className="mx-auto" />
           </div>
           
-          <div className="text-sm text-gray-500 space-y-2">
-            <p>{t('supportedWallets')}</p>
-            <div className="flex justify-center gap-2 flex-wrap">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">TON Wallet</span>
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Tonkeeper</span>
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">TON Hub</span>
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">MyTonWallet</span>
-            </div>
-          </div>
+          
           
           {connectionStatus === 'error' && <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-600">
