@@ -176,7 +176,7 @@ export const PrincessCards = () => {
                     </Badge>}
                 </div>
                 
-                <p className="text-sm text-gray-600 leading-relaxed">{card.description}</p>
+                <p className="text-sm leading-relaxed text-violet-950 text-center">{card.description}</p>
                 
                 {/* Stats - محسن */}
                 <div className="bg-white/20 rounded-lg p-3 space-y-2 px-0 py-0">
