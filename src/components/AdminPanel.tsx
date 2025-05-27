@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -152,11 +151,16 @@ export const AdminPanel = () => {
   // Delete card mutation
   const deleteCardMutation = useMutation({
     mutationFn: async (cardId: string) => {
+      console.log('Attempting to delete card:', cardId);
       const { error } = await supabase
         .from('cards')
         .delete()
         .eq('id', cardId);
-      if (error) throw error;
+      if (error) {
+        console.error('Card deletion error:', error);
+        throw error;
+      }
+      console.log('Card deleted successfully');
     },
     onSuccess: () => {
       toast({
@@ -165,19 +169,60 @@ export const AdminPanel = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['cards'] });
     },
-    onError: () => {
-      toast({ title: t('error'), description: t('errorOccurred'), variant: "destructive" });
+    onError: (error) => {
+      console.error('Card deletion failed:', error);
+      toast({ 
+        title: t('error'), 
+        description: 'فشل في حذف البطاقة: ' + error.message, 
+        variant: "destructive" 
+      });
     }
   });
 
-  // Delete task mutation
+  // Delete task mutation with improved error handling
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
+      console.log('Attempting to delete task:', taskId);
+      
+      // First check if task exists
+      const { data: existingTask, error: checkError } = await supabase
+        .from('tasks')
+        .select('id')
+        .eq('id', taskId)
+        .single();
+      
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking task existence:', checkError);
+        throw new Error('خطأ في التحقق من وجود المهمة');
+      }
+      
+      if (!existingTask) {
+        throw new Error('المهمة غير موجودة');
+      }
+
+      // Delete related task completions first (if any)
+      const { error: completionError } = await supabase
+        .from('user_task_completions')
+        .delete()
+        .eq('task_id', taskId);
+      
+      if (completionError) {
+        console.error('Error deleting task completions:', completionError);
+        // Don't throw error here, continue with task deletion
+      }
+
+      // Now delete the task
       const { error } = await supabase
         .from('tasks')
         .delete()
         .eq('id', taskId);
-      if (error) throw error;
+      
+      if (error) {
+        console.error('Task deletion error:', error);
+        throw error;
+      }
+      
+      console.log('Task deleted successfully');
     },
     onSuccess: () => {
       toast({
@@ -185,9 +230,15 @@ export const AdminPanel = () => {
         description: 'تم حذف المهمة بنجاح',
       });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['user-task-completions'] });
     },
-    onError: () => {
-      toast({ title: t('error'), description: t('errorOccurred'), variant: "destructive" });
+    onError: (error) => {
+      console.error('Task deletion failed:', error);
+      toast({ 
+        title: t('error'), 
+        description: 'فشل في حذف المهمة: ' + error.message, 
+        variant: "destructive" 
+      });
     }
   });
 
@@ -217,15 +268,17 @@ export const AdminPanel = () => {
     addTaskMutation.mutate(newTask);
   };
 
-  // Delete handlers
+  // Delete handlers with better confirmation
   const handleDeleteCard = (cardId: string) => {
-    if (confirm('هل أنت متأكد من حذف هذه البطاقة؟')) {
+    if (window.confirm('هل أنت متأكد من حذف هذه البطاقة؟ لا يمكن التراجع عن هذا الإجراء.')) {
+      console.log('User confirmed card deletion for:', cardId);
       deleteCardMutation.mutate(cardId);
     }
   };
 
   const handleDeleteTask = (taskId: string) => {
-    if (confirm('هل أنت متأكد من حذف هذه المهمة؟')) {
+    if (window.confirm('هل أنت متأكد من حذف هذه المهمة؟ سيتم حذف جميع البيانات المرتبطة بها.')) {
+      console.log('User confirmed task deletion for:', taskId);
       deleteTaskMutation.mutate(taskId);
     }
   };
@@ -469,11 +522,12 @@ export const AdminPanel = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="text-red-500 hover:bg-red-50"
+                    className="text-red-500 hover:bg-red-50 hover:text-red-700"
                     onClick={() => handleDeleteCard(card.id)}
                     disabled={deleteCardMutation.isPending}
                   >
                     <Trash2 className="w-4 h-4" />
+                    {deleteCardMutation.isPending ? 'جاري الحذف...' : 'حذف'}
                   </Button>
                 </div>
               </div>
@@ -497,6 +551,7 @@ export const AdminPanel = () => {
                   <p className="font-medium">{task.title}</p>
                   <p className="text-xs text-gray-600 truncate max-w-xs">{task.description}</p>
                   <p className="text-xs text-princess-purple">الفئة: {task.category}</p>
+                  <p className="text-xs text-green-600">المكافأة: {task.reward}</p>
                   {task.link && (
                     <a 
                       href={task.link} 
@@ -513,11 +568,12 @@ export const AdminPanel = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="text-red-500 hover:bg-red-50"
+                    className="text-red-500 hover:bg-red-50 hover:text-red-700"
                     onClick={() => handleDeleteTask(task.id)}
                     disabled={deleteTaskMutation.isPending}
                   >
                     <Trash2 className="w-4 h-4" />
+                    {deleteTaskMutation.isPending ? 'جاري الحذف...' : 'حذف'}
                   </Button>
                 </div>
               </div>
