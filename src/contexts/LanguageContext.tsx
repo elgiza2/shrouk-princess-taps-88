@@ -83,7 +83,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
     referralLinkCopied: 'Referral link copied to clipboard.',
     joinSHROUKMining: 'Join SHROUK Mining',
     mineCryptoWithCards: 'Mine crypto with beautiful princess cards!',
-    // Wallet translations
     connectTonWallet: 'Connect TON Wallet',
     connectToManage: 'Connect your wallet to manage your $SHROUK and $TON tokens',
     supportedWallets: 'Supported Wallets:',
@@ -101,7 +100,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
     send: 'Send',
     receive: 'Receive',
     pending: 'Pending',
-    completed: 'Completed',
     failed: 'Failed',
     to: 'To:',
     noTransactions: 'No transactions yet',
@@ -118,7 +116,9 @@ const translations: { [key: string]: { [key: string]: string } } = {
     couldNotFetchBalance: 'Could not fetch real TON balance',
     connectionErrorDescription: 'Error occurred during disconnection',
     noWalletConnected: 'No wallet connected',
-    connectWalletFirst: 'Please connect wallet first'
+    connectWalletFirst: 'Please connect wallet first',
+    loading: 'Loading',
+    noTasks: 'No tasks found'
   },
   ar: {
     mining: 'التعدين',
@@ -194,7 +194,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
     referralLinkCopied: 'تم نسخ رابط الإحالة إلى الحافظة.',
     joinSHROUKMining: 'انضم إلى تعدين شروق',
     mineCryptoWithCards: 'قم بتعدين العملات المشفرة ببطاقات الأميرات الجميلة!',
-    // Wallet translations
     connectTonWallet: 'اربط محفظة TON',
     connectToManage: 'اربط محفظتك لإدارة رموز $SHROUK و $TON الخاصة بك',
     supportedWallets: 'المحافظ المدعوم:',
@@ -212,7 +211,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
     send: 'إرسال',
     receive: 'استقبال',
     pending: 'معلقة',
-    completed: 'مكتملة',
     failed: 'فاشلة',
     to: 'إلى:',
     noTransactions: 'لا توجد معاملات بعد',
@@ -229,7 +227,9 @@ const translations: { [key: string]: { [key: string]: string } } = {
     couldNotFetchBalance: 'لم نتمكن من جلب رصيد TON الحقيقي',
     connectionErrorDescription: 'حدث خطأ أثناء قطع الاتصال',
     noWalletConnected: 'لا توجد محفظة متصلة',
-    connectWalletFirst: 'يرجى ربط المحفظة أولاً'
+    connectWalletFirst: 'يرجى ربط المحفظة أولاً',
+    loading: 'جاري التحميل',
+    noTasks: 'لا توجد مهام'
   },
   ru: {
     mining: 'Майнинг',
@@ -305,7 +305,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
     referralLinkCopied: 'Реферальная ссылка скопирована в буфер обмена.',
     joinSHROUKMining: 'Присоединяйтесь к SHROUK Mining',
     mineCryptoWithCards: 'Майните криптовалюту с красивыми картами принцесс!',
-    // Wallet translations
     connectTonWallet: 'Подключить TON кошелек',
     connectToManage: 'Подключите кошелек для управления токенами $SHROUK и $TON',
     supportedWallets: 'Поддерживаемые кошельки:',
@@ -323,7 +322,6 @@ const translations: { [key: string]: { [key: string]: string } } = {
     send: 'Отправить',
     receive: 'Получить',
     pending: 'Ожидание',
-    completed: 'Завершено',
     failed: 'Неудачно',
     to: 'К:',
     noTransactions: 'Транзакций пока нет',
@@ -340,7 +338,9 @@ const translations: { [key: string]: { [key: string]: string } } = {
     couldNotFetchBalance: 'Не удалось получить реальный баланс TON',
     connectionErrorDescription: 'Произошла ошибка при отключении',
     noWalletConnected: 'Кошелек не подключен',
-    connectWalletFirst: 'Сначала подключите кошелек'
+    connectWalletFirst: 'Сначала подключите кошелек',
+    loading: 'Загрузка',
+    noTasks: 'Заданий нет'
   }
 };
 
