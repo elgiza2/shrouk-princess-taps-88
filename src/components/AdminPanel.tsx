@@ -61,14 +61,14 @@ export const AdminPanel = () => {
       {/* Add New Card */}
       <Card className="glass-card p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold">{t('addCard')}</h3>
+          <h3 className="font-bold">{t('addNewCard')}</h3>
           <Button 
             onClick={() => setIsAddingCard(!isAddingCard)}
             variant="outline"
             size="sm"
           >
             <Plus className="w-4 h-4 mr-1" />
-            Add Card
+            {t('addCard')}
           </Button>
         </div>
 
@@ -86,7 +86,7 @@ export const AdminPanel = () => {
               </div>
               
               <div>
-                <Label htmlFor="rarity">Rarity</Label>
+                <Label htmlFor="rarity">{t('rarity')}</Label>
                 <Select 
                   value={newCard.rarity}
                   onValueChange={(value) => setNewCard(prev => ({ ...prev, rarity: value }))}
@@ -176,7 +176,7 @@ export const AdminPanel = () => {
 
       {/* Existing Cards Management */}
       <Card className="glass-card p-4">
-        <h3 className="font-bold mb-4">Manage Existing Cards</h3>
+        <h3 className="font-bold mb-4">{t('manageCards')}</h3>
         <div className="space-y-3">
           {[
             { name: 'Rose Princess', currency: 'SHROUK', yield: '0.01', price: '1.0' },

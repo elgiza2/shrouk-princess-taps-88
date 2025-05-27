@@ -41,7 +41,28 @@ const translations: { [key: string]: { [key: string]: string } } = {
     magical: 'Magical',
     fairy: 'Fairy',
     queen: 'Queen',
-    empress: 'Empress'
+    empress: 'Empress',
+    // إضافة الترجمات المفقودة
+    taskCenter: 'Tasks Center',
+    dailyTasks: 'Daily Tasks',
+    mainTasks: 'Main Tasks',
+    partnerTasks: 'Partner Tasks',
+    completed: 'Completed',
+    claim: 'Claim',
+    buyPrincessCard: 'Buy a Princess Card',
+    completeAllTasks: 'Complete All Tasks',
+    reachLevel10: 'Reach Level 10',
+    invite5Friends: 'Invite 5 Friends',
+    howToGetReferralLink: 'How to Get Referral Link',
+    enterBot: 'Enter the Bot',
+    writeCommand: 'Write Command',
+    getReferralLink: 'Get Referral Link',
+    openBot: 'Open Bot',
+    airdropReward: 'Airdrop Reward',
+    bonusReward: 'Bonus Reward',
+    rarity: 'Rarity',
+    addNewCard: 'Add New Card',
+    manageCards: 'Manage Existing Cards'
   },
   ar: {
     mining: 'التعدين',
@@ -74,7 +95,28 @@ const translations: { [key: string]: { [key: string]: string } } = {
     magical: 'سحرية',
     fairy: 'جنية',
     queen: 'ملكة',
-    empress: 'إمبراطورة'
+    empress: 'إمبراطورة',
+    // إضافة الترجمات المفقودة
+    taskCenter: 'مركز المهام',
+    dailyTasks: 'المهام اليومية',
+    mainTasks: 'المهام الرئيسية',
+    partnerTasks: 'مهام الشركاء',
+    completed: 'مكتملة',
+    claim: 'استلام',
+    buyPrincessCard: 'شراء بطاقة أميرة',
+    completeAllTasks: 'إكمال جميع المهام',
+    reachLevel10: 'الوصول للمستوى 10',
+    invite5Friends: 'دعوة 5 أصدقاء',
+    howToGetReferralLink: 'كيفية الحصول على رابط الإحالة',
+    enterBot: 'ادخل إلى البوت',
+    writeCommand: 'اكتب الأمر',
+    getReferralLink: 'احصل على رابط الإحالة',
+    openBot: 'فتح البوت',
+    airdropReward: 'مكافأة الإيردروب',
+    bonusReward: 'مكافأة إضافية',
+    rarity: 'الندرة',
+    addNewCard: 'إضافة بطاقة جديدة',
+    manageCards: 'إدارة البطاقات الموجودة'
   },
   ru: {
     mining: 'Майнинг',
@@ -107,12 +149,33 @@ const translations: { [key: string]: { [key: string]: string } } = {
     magical: 'Магическая',
     fairy: 'Фея',
     queen: 'Королева',
-    empress: 'Императрица'
+    empress: 'Императрица',
+    // إضافة الترجمات المفقودة
+    taskCenter: 'Центр заданий',
+    dailyTasks: 'Ежедневные задания',
+    mainTasks: 'Основные задания',
+    partnerTasks: 'Партнерские задания',
+    completed: 'Завершено',
+    claim: 'Получить',
+    buyPrincessCard: 'Купить карту принцессы',
+    completeAllTasks: 'Выполнить все задания',
+    reachLevel10: 'Достичь 10 уровня',
+    invite5Friends: 'Пригласить 5 друзей',
+    howToGetReferralLink: 'Как получить реферальную ссылку',
+    enterBot: 'Войти в бота',
+    writeCommand: 'Написать команду',
+    getReferralLink: 'Получить реферальную ссылку',
+    openBot: 'Открыть бота',
+    airdropReward: 'Награда за аирдроп',
+    bonusReward: 'Бонусная награда',
+    rarity: 'Редкость',
+    addNewCard: 'Добавить новую карту',
+    manageCards: 'Управление существующими картами'
   }
 };
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState('ar'); // تغيير اللغة الافتراضية للعربية
 
   useEffect(() => {
     const savedLang = localStorage.getItem('language');
@@ -123,6 +186,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const browserLang = navigator.language.split('-')[0];
       if (translations[browserLang]) {
         setLanguage(browserLang);
+      } else {
+        setLanguage('ar'); // الافتراضي العربية
       }
     }
   }, []);
@@ -133,7 +198,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const t = (key: string): string => {
-    return translations[language]?.[key] || translations.en[key] || key;
+    return translations[language]?.[key] || translations.ar[key] || key;
   };
 
   return (
