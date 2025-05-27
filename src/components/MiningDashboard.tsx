@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Zap, Coins, TrendingUp, Sparkles, ArrowUp, Star } from 'lucide-react';
-
 export const MiningDashboard = () => {
   const {
     t
@@ -74,7 +73,7 @@ export const MiningDashboard = () => {
   };
   return <div className="space-y-6">
       {/* Mining Stats - SHROUK Only */}
-      <div className="grid grid-cols-1 gap-4 px-4">
+      <div className="grid grid-cols-1 gap-4 px-4 py-0 my-[10px]">
         <Card className="glass-card relative overflow-hidden">
           {/* خلفية متدرجة وشرارات */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
@@ -82,17 +81,12 @@ export const MiningDashboard = () => {
             <Star className="w-3 h-3 text-yellow-400 animate-pulse" />
           </div>
           
-          <div className="relative p-3 text-center">
+          <div className="relative p-3 text-center py-0 px-0">
             {/* أيقونة العملة المدمجة */}
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                <Coins className="w-3 h-3 text-white" />
-              </div>
-              <h3 className="text-sm font-bold text-gray-700">SHROUK</h3>
-            </div>
+            
             
             {/* عدد النقاط */}
-            <div className="bg-white/30 backdrop-blur-sm rounded-xl p-3 shadow-inner">
+            <div className="bg-white/30 backdrop-blur-sm p-3 shadow-inner mx-[97px] px-px my-px py-0 rounded-none">
               <p className="text-2xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 {shrougEarned.toLocaleString()}
               </p>
@@ -100,10 +94,7 @@ export const MiningDashboard = () => {
             </div>
             
             {/* مؤشر النمو مدمج */}
-            <div className="flex items-center justify-center mt-2 text-green-500">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              <span className="text-xs font-medium">+{tapValue.toFixed(4)}</span>
-            </div>
+            
           </div>
         </Card>
       </div>
