@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,10 +39,11 @@ export const PrincessCards = () => {
       
       if (error) throw error;
       
-      // Add image URLs based on card names
+      // Add image URLs and update currency for Shrouk card
       const cardsWithImages = data.map(card => ({
         ...card,
-        image: getCardImage(card.name)
+        image: getCardImage(card.name),
+        currency: card.name === 'Shrouk' ? 'TON' : 'SHROUK'
       }));
       
       return cardsWithImages;
@@ -283,11 +283,16 @@ export const PrincessCards = () => {
     return userCards.find(uc => uc.card_id === cardId);
   };
 
+  // Calculate actual hourly yield with doubling effect for each level
+  const getActualHourlyYield = (baseYield: number, level: number) => {
+    return baseYield * Math.pow(2, level - 1);
+  };
+
   const getTotalHourlyEarnings = () => {
     return userCards.reduce((total, userCard) => {
       const card = cards.find(c => c.id === userCard.card_id);
       if (card?.currency === 'SHROUK') {
-        return total + (card.hourly_yield * userCard.level);
+        return total + getActualHourlyYield(card.hourly_yield, userCard.level);
       }
       return total;
     }, 0);
@@ -346,66 +351,67 @@ export const PrincessCards = () => {
       </Card>
 
       {/* Princess Cards Grid */}
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-4">
         {cards.map(card => {
           const ownedCard = getOwnedCard(card.id);
           const isOwned = !!ownedCard;
+          const actualYield = isOwned ? getActualHourlyYield(card.hourly_yield, ownedCard.level) : card.hourly_yield;
           const upgradeCost = isOwned ? card.price * ownedCard.level * 2 : 0;
           
           return (
             <Card 
               key={card.id} 
-              className={`glass-card p-6 border-2 shadow-lg ${getRarityBorder(card.rarity)} ${
+              className={`glass-card p-4 border-2 shadow-lg ${getRarityBorder(card.rarity)} ${
                 isOwned ? 'bg-gradient-to-br from-green-50/30 to-emerald-50/30 border-green-400' : 'bg-gradient-to-br from-white/10 to-white/5'
-              } hover:shadow-xl transition-all duration-300 hover:scale-[1.02]`}
+              } hover:shadow-xl transition-all duration-300 hover:scale-[1.01]`}
             >
-              <div className="flex items-start gap-6">
+              <div className="flex items-start gap-4">
                 {/* Princess Avatar */}
                 <div className="relative flex-shrink-0">
-                  <div className="w-28 h-28 rounded-full relative overflow-hidden border-3 border-princess-gold shadow-lg">
+                  <div className="w-20 h-20 rounded-full relative overflow-hidden border-2 border-princess-gold shadow-lg">
                     <img src={card.image} alt={card.name} className="w-full h-full object-cover" />
                   </div>
                   
                   {/* Rarity Badge */}
-                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-                    <Badge className={`${getRarityColor(card.rarity)} text-white text-xs px-3 py-1 shadow-md`}>
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
+                    <Badge className={`${getRarityColor(card.rarity)} text-white text-xs px-2 py-0.5 shadow-md`}>
                       {card.rarity}
                     </Badge>
                   </div>
                 </div>
 
                 {/* Card Info */}
-                <div className="flex-1 space-y-3">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-bold text-xl text-gray-800">{card.name}</h3>
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-bold text-lg text-gray-800">{card.name}</h3>
                     {isOwned && (
-                      <Badge variant="outline" className="text-sm bg-green-50 border-green-300 text-green-700">
+                      <Badge variant="outline" className="text-xs bg-green-50 border-green-300 text-green-700">
                         {t('level')} {ownedCard.level}
                       </Badge>
                     )}
                   </div>
                   
-                  <p className="text-sm leading-relaxed text-violet-950 text-center">{card.description}</p>
+                  <p className="text-xs leading-relaxed text-violet-950">{card.description}</p>
                   
                   {/* Stats */}
-                  <div className="bg-white/20 rounded-lg p-3 space-y-2">
+                  <div className="bg-white/20 rounded-lg p-2 space-y-1">
                     <div className="flex items-center gap-2">
-                      <Coins className="w-4 h-4 text-princess-gold" />
+                      <Coins className="w-3 h-3 text-princess-gold" />
                       <span className="font-semibold text-xs">
-                        {(card.hourly_yield * (isOwned ? ownedCard.level : 1)).toLocaleString()} {card.currency}/h
+                        {actualYield.toLocaleString()} {card.currency}/h
                       </span>
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Crown className="w-4 h-4 text-princess-purple" />
+                      <Crown className="w-3 h-3 text-princess-purple" />
                       <span className="font-semibold text-xs">
                         {card.price.toLocaleString()} {card.currency}
                       </span>
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 pt-2">
+                  {/* Action Buttons - Mobile Optimized */}
+                  <div className="pt-1">
                     {!isOwned ? (
                       <Button 
                         onClick={() => buyCardMutation.mutate({ 
@@ -414,11 +420,11 @@ export const PrincessCards = () => {
                           currency: card.currency 
                         })}
                         size="sm" 
-                        className="princess-button flex-1 h-12 text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300"
+                        className="princess-button w-full h-8 text-xs font-bold shadow-md hover:shadow-lg transition-all duration-300"
                         disabled={buyCardMutation.isPending || !canAfford(card.price, card.currency)}
                       >
                         {buyCardMutation.isPending ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-3 h-3 animate-spin" />
                         ) : !canAfford(card.price, card.currency) ? (
                           t('insufficientBalance')
                         ) : (
@@ -433,15 +439,15 @@ export const PrincessCards = () => {
                         })}
                         size="sm" 
                         variant="outline" 
-                        className="flex-1 h-12 text-base font-bold border-2 border-princess-purple text-princess-purple hover:bg-princess-purple hover:text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                        className="w-full h-8 text-xs font-bold border-2 border-princess-purple text-princess-purple hover:bg-princess-purple hover:text-white shadow-md hover:shadow-lg transition-all duration-300"
                         disabled={upgradeCardMutation.isPending || !canAfford(upgradeCost, 'SHROUK')}
                       >
                         {upgradeCardMutation.isPending ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-3 h-3 animate-spin" />
                         ) : !canAfford(upgradeCost, 'SHROUK') ? (
                           t('insufficientBalance')
                         ) : (
-                          `${t('upgrade')} (Lv.${ownedCard.level + 1})`
+                          `${t('upgrade')} (Lv.${ownedCard.level + 1}) - ${upgradeCost.toLocaleString()}`
                         )}
                       </Button>
                     )}
