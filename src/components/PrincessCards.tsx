@@ -185,10 +185,20 @@ export const PrincessCards = () => {
         throw new Error('Insufficient balance');
       }
       
+      // Get current card level first
+      const { data: currentCard, error: fetchError } = await supabase
+        .from('user_cards')
+        .select('level')
+        .eq('user_address', wallet.account.address)
+        .eq('card_id', cardId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
       // Upgrade the card
       const { error: upgradeError } = await supabase
         .from('user_cards')
-        .update({ level: supabase.sql`level + 1` })
+        .update({ level: currentCard.level + 1 })
         .eq('user_address', wallet.account.address)
         .eq('card_id', cardId);
       
