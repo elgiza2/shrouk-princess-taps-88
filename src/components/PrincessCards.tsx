@@ -156,9 +156,7 @@ export const PrincessCards = () => {
               <div className="relative flex-shrink-0">
                 <div className="w-28 h-28 rounded-full relative overflow-hidden border-3 border-princess-gold shadow-lg">
                   <img src={card.image} alt={card.name} className="w-full h-full object-cover" />
-                  {card.owned && <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center backdrop-blur-sm">
-                      <Star className="w-10 h-10 text-green-500 animate-pulse" />
-                    </div>}
+                  {card.owned}
                 </div>
                 
                 {/* Rarity Badge - منفصل عن الصورة */}
