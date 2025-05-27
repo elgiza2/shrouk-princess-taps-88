@@ -77,8 +77,9 @@ export const WalletSection = () => {
         (payload) => {
           console.log('Balance updated:', payload);
           if (payload.new && typeof payload.new === 'object') {
-            setShrougBalance(Number(payload.new.shrouk_balance) || 0);
-            setTonBalance(Number(payload.new.ton_balance) || 0);
+            const balanceData = payload.new as any;
+            setShrougBalance(Number(balanceData.shrouk_balance) || 0);
+            setTonBalance(Number(balanceData.ton_balance) || 0);
           }
         }
       )
@@ -93,8 +94,9 @@ export const WalletSection = () => {
         (payload) => {
           console.log('Tap points updated:', payload);
           if (payload.new && typeof payload.new === 'object') {
+            const tapData = payload.new as any;
             // Update SHROUK balance when tap points change
-            setShrougBalance(Number(payload.new.tap_points) || 0);
+            setShrougBalance(Number(tapData.tap_points) || 0);
           }
         }
       )
