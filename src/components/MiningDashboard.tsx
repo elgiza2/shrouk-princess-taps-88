@@ -155,15 +155,15 @@ export const MiningDashboard = () => {
       </Card>
 
       {/* Hourly Earnings Preview */}
-      <Card className="glass-card p-4">
+      <Card className="glass-card p-4 rounded-full py-[7px]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-500" />
-            <span className="font-medium">{t('hourlyEarnings')}</span>
+            <span className="font-bold">{t('hourlyEarnings')}</span>
           </div>
           <div className="text-right">
-            <p className="text-sm text-blue-500">+0.025 SHROUK</p>
-            <p className="text-sm text-blue-400">+0.002 TON</p>
+            <p className="text-sm text-blue-500 font-bold">+0.025 SHROUK</p>
+            
           </div>
         </div>
       </Card>
