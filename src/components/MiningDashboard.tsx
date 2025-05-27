@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Zap, Coins, TrendingUp, Sparkles, ArrowUp } from 'lucide-react';
-
 export const MiningDashboard = () => {
   const {
     t
@@ -75,14 +74,12 @@ export const MiningDashboard = () => {
   return <div className="space-y-6">
       {/* Mining Stats - SHROUK Only */}
       <div className="grid grid-cols-1 gap-4 px-[13px]">
-        <Card className="glass-card p-4 animate-float">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">S</span>
-            </div>
+        <Card className="glass-card p-4 animate-float rounded-full px-0 my-0 py-[6px] mx-[28px]">
+          <div className="flex items-center gap-2 mb-2 px-[106px]">
+            
             <span className="text-sm font-medium">SHROUK</span>
           </div>
-          <p className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent">
+          <p className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent px-[127px]">
             {shrougEarned.toFixed(0)}
           </p>
         </Card>
