@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,8 +32,8 @@ export const WalletSection = () => {
       fetchRealTonBalance();
       
       toast({
-        title: "تم ربط المحفظة بنجاح! ✅",
-        description: `عنوان المحفظة: ${wallet.account.address.slice(0, 6)}...${wallet.account.address.slice(-6)}`,
+        title: t('walletConnectedSuccessfully'),
+        description: `${t('walletAddress')}: ${wallet.account.address.slice(0, 6)}...${wallet.account.address.slice(-6)}`,
       });
     } else {
       console.log('No wallet connected');
@@ -92,8 +91,8 @@ export const WalletSection = () => {
           await updateTonBalanceInDB(realBalance);
           
           toast({
-            title: "تم تحديث الرصيد",
-            description: `رصيد TON: ${realBalance.toFixed(4)}`,
+            title: t('balanceUpdated'),
+            description: `${t('tonBalance')} ${realBalance.toFixed(4)}`,
           });
         } else {
           console.error('Invalid API response:', data);
@@ -106,8 +105,8 @@ export const WalletSection = () => {
     } catch (error) {
       console.error('Error fetching real TON balance:', error);
       toast({
-        title: "خطأ في جلب الرصيد",
-        description: "لم نتمكن من جلب رصيد TON الحقيقي",
+        title: t('errorFetchingBalance'),
+        description: t('couldNotFetchBalance'),
         variant: "destructive"
       });
     } finally {
@@ -197,8 +196,8 @@ export const WalletSection = () => {
     if (wallet?.account?.address) {
       navigator.clipboard.writeText(wallet.account.address);
       toast({
-        title: "تم نسخ العنوان! 📋",
-        description: "تم نسخ عنوان المحفظة إلى الحافظة.",
+        title: t('addressCopied'),
+        description: t('walletAddressCopied'),
       });
     }
   };
@@ -213,15 +212,15 @@ export const WalletSection = () => {
       setConnectionStatus('disconnected');
       
       toast({
-        title: "تم قطع الاتصال! 🔌",
-        description: "تم قطع الاتصال بمحفظة TON.",
+        title: t('walletDisconnected'),
+        description: t('tonWalletDisconnected'),
       });
     } catch (error) {
       console.error('Error disconnecting wallet:', error);
       setConnectionStatus('error');
       toast({
-        title: "خطأ في قطع الاتصال",
-        description: "حدث خطأ أثناء قطع الاتصال",
+        title: t('transactionFailed'),
+        description: t('connectionErrorDescription'),
         variant: "destructive"
       });
     }
@@ -230,8 +229,8 @@ export const WalletSection = () => {
   const sendRealTonTransaction = async (toAddress: string, amount: number) => {
     if (!wallet?.account?.address) {
       toast({
-        title: "لا توجد محفظة متصلة",
-        description: "يرجى ربط المحفظة أولاً",
+        title: t('noWalletConnected'),
+        description: t('connectWalletFirst'),
         variant: "destructive"
       });
       return;
@@ -272,8 +271,8 @@ export const WalletSection = () => {
       }
 
       toast({
-        title: "تم إرسال المعاملة! ✅",
-        description: `تم إرسال ${amount} TON بنجاح`,
+        title: t('transactionSent'),
+        description: `${t('transactionSentSuccess')} ${amount} TON`,
       });
 
       setTimeout(() => {
@@ -284,8 +283,8 @@ export const WalletSection = () => {
     } catch (error) {
       console.error('Transaction failed:', error);
       toast({
-        title: "فشل في المعاملة",
-        description: "فشل في إرسال المعاملة. يرجى المحاولة مرة أخرى.",
+        title: t('transactionFailed'),
+        description: t('transactionFailedDescription'),
         variant: "destructive"
       });
     } finally {
@@ -320,9 +319,9 @@ export const WalletSection = () => {
             <Wallet className="w-16 h-16 text-princess-purple" />
             {getConnectionStatusIcon()}
           </div>
-          <h2 className="text-xl font-bold mb-2">اربط محفظة TON</h2>
+          <h2 className="text-xl font-bold mb-2">{t('connectTonWallet')}</h2>
           <p className="text-gray-600 mb-6">
-            اربط محفظتك لإدارة رموز $SHROUK و $TON الخاصة بك
+            {t('connectToManage')}
           </p>
           
           <div className="mb-6">
@@ -330,7 +329,7 @@ export const WalletSection = () => {
           </div>
           
           <div className="text-sm text-gray-500 space-y-2">
-            <p>المحافظ المدعومة:</p>
+            <p>{t('supportedWallets')}</p>
             <div className="flex justify-center gap-2 flex-wrap">
               <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">TON Wallet</span>
               <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Tonkeeper</span>
@@ -342,7 +341,7 @@ export const WalletSection = () => {
           {connectionStatus === 'error' && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-600">
-                حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.
+                {t('connectionError')}
               </p>
             </div>
           )}
@@ -358,7 +357,7 @@ export const WalletSection = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div>
-              <p className="text-sm text-gray-600">عنوان المحفظة</p>
+              <p className="text-sm text-gray-600">{t('walletAddress')}</p>
               <p className="font-mono text-sm">
                 {wallet.account.address.slice(0, 6)}...{wallet.account.address.slice(-6)}
               </p>
@@ -379,7 +378,7 @@ export const WalletSection = () => {
               size="sm"
               disabled={connectionStatus === 'connecting'}
             >
-              {connectionStatus === 'connecting' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'قطع الاتصال'}
+              {connectionStatus === 'connecting' ? <Loader2 className="w-4 h-4 animate-spin" /> : t('disconnect')}
             </Button>
           </div>
         </div>
@@ -407,7 +406,7 @@ export const WalletSection = () => {
             className="mt-2 text-xs"
             disabled={isLoadingBalance}
           >
-            تحديث الرصيد
+            {t('refreshBalance')}
           </Button>
         </Card>
       </div>
@@ -417,7 +416,7 @@ export const WalletSection = () => {
         <Card className="glass-card p-4">
           <h3 className="font-bold mb-4 flex items-center gap-2">
             <Send className="w-5 h-5" />
-            إرسال معاملة حقيقية
+            {t('sendRealTransaction')}
           </h3>
           <Button 
             onClick={sendTestTransaction}
@@ -425,11 +424,11 @@ export const WalletSection = () => {
             disabled={isSendingTransaction || tonBalance < 0.01}
           >
             {isSendingTransaction && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-            إرسال 0.01 TON (اختبار)
+            {t('sendTestTon')}
           </Button>
           {tonBalance < 0.01 && (
             <p className="text-sm text-red-500 mt-2 text-center">
-              رصيد TON غير كافي للمعاملة
+              {t('insufficientBalance')}
             </p>
           )}
         </Card>
@@ -439,7 +438,7 @@ export const WalletSection = () => {
       <Card className="glass-card p-4">
         <h3 className="font-bold mb-4 flex items-center gap-2">
           <ArrowUpDown className="w-5 h-5" />
-          المعاملات الأخيرة
+          {t('recentTransactions')}
         </h3>
         <div className="space-y-3">
           {transactions.length > 0 ? (
@@ -447,17 +446,17 @@ export const WalletSection = () => {
               <div key={index} className="flex justify-between items-center py-2 border-b border-white/10 last:border-b-0">
                 <div>
                   <p className="font-medium">
-                    {tx.transaction_type === 'send' ? 'إرسال' : 'استقبال'}
+                    {tx.transaction_type === 'send' ? t('send') : t('receive')}
                   </p>
                   <p className="text-sm text-gray-600">
                     {new Date(tx.created_at).toLocaleString('ar-SA')}
                   </p>
                   <p className="text-xs text-gray-500">
-                    الحالة: {tx.status === 'pending' ? 'معلقة' : tx.status === 'completed' ? 'مكتملة' : 'فاشلة'}
+                    {t('pending') === tx.status ? t('pending') : tx.status === 'completed' ? t('completed') : t('failed')}
                   </p>
                   {tx.to_address && (
                     <p className="text-xs text-gray-400 font-mono">
-                      إلى: {tx.to_address.slice(0, 6)}...{tx.to_address.slice(-6)}
+                      {t('to')} {tx.to_address.slice(0, 6)}...{tx.to_address.slice(-6)}
                     </p>
                   )}
                 </div>
@@ -467,7 +466,7 @@ export const WalletSection = () => {
               </div>
             ))
           ) : (
-            <p className="text-gray-500 text-center py-4">لا توجد معاملات بعد</p>
+            <p className="text-gray-500 text-center py-4">{t('noTransactions')}</p>
           )}
         </div>
       </Card>

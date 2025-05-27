@@ -82,7 +82,43 @@ const translations: { [key: string]: { [key: string]: string } } = {
     linkCopied: 'Link Copied!',
     referralLinkCopied: 'Referral link copied to clipboard.',
     joinSHROUKMining: 'Join SHROUK Mining',
-    mineCryptoWithCards: 'Mine crypto with beautiful princess cards!'
+    mineCryptoWithCards: 'Mine crypto with beautiful princess cards!',
+    // Wallet translations
+    connectTonWallet: 'Connect TON Wallet',
+    connectToManage: 'Connect your wallet to manage your $SHROUK and $TON tokens',
+    supportedWallets: 'Supported Wallets:',
+    connectionError: 'Connection error occurred. Please try again.',
+    walletAddress: 'Wallet Address',
+    disconnect: 'Disconnect',
+    copy: 'Copy',
+    balanceUpdated: 'Balance Updated',
+    tonBalance: 'TON Balance:',
+    refreshBalance: 'Refresh Balance',
+    sendRealTransaction: 'Send Real Transaction',
+    sendTestTon: 'Send 0.01 TON (Test)',
+    insufficientBalance: 'Insufficient TON balance for transaction',
+    recentTransactions: 'Recent Transactions',
+    send: 'Send',
+    receive: 'Receive',
+    pending: 'Pending',
+    completed: 'Completed',
+    failed: 'Failed',
+    to: 'To:',
+    noTransactions: 'No transactions yet',
+    walletConnectedSuccessfully: 'Wallet connected successfully! ✅',
+    walletDisconnected: 'Disconnected! 🔌',
+    tonWalletDisconnected: 'TON wallet disconnected.',
+    addressCopied: 'Address copied! 📋',
+    walletAddressCopied: 'Wallet address copied to clipboard.',
+    transactionSent: 'Transaction sent! ✅',
+    transactionSentSuccess: 'sent successfully',
+    transactionFailed: 'Transaction failed',
+    transactionFailedDescription: 'Failed to send transaction. Please try again.',
+    errorFetchingBalance: 'Error fetching balance',
+    couldNotFetchBalance: 'Could not fetch real TON balance',
+    connectionErrorDescription: 'Error occurred during disconnection',
+    noWalletConnected: 'No wallet connected',
+    connectWalletFirst: 'Please connect wallet first'
   },
   ar: {
     mining: 'التعدين',
@@ -131,7 +167,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
     writeCommand: 'اكتب الأمر',
     getReferralLink: 'احصل على رابط الإحالة',
     openBot: 'فتح البوت',
-    airdropReward: 'مكافأة الإيردروب',
+    airdropReward: 'كافأة الإيردروب',
     bonusReward: 'كافأة إضافية',
     rarity: 'الندرة',
     addNewCard: 'إضافة بطاقة جديدة',
@@ -157,7 +193,43 @@ const translations: { [key: string]: { [key: string]: string } } = {
     linkCopied: 'تم نسخ الرابط!',
     referralLinkCopied: 'تم نسخ رابط الإحالة إلى الحافظة.',
     joinSHROUKMining: 'انضم إلى تعدين شروق',
-    mineCryptoWithCards: 'قم بتعدين العملات المشفرة ببطاقات الأميرات الجميلة!'
+    mineCryptoWithCards: 'قم بتعدين العملات المشفرة ببطاقات الأميرات الجميلة!',
+    // Wallet translations
+    connectTonWallet: 'اربط محفظة TON',
+    connectToManage: 'اربط محفظتك لإدارة رموز $SHROUK و $TON الخاصة بك',
+    supportedWallets: 'المحافظ المدعوم:',
+    connectionError: 'حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.',
+    walletAddress: 'عنوان المحفظة',
+    disconnect: 'قطع الاتصال',
+    copy: 'نسخ',
+    balanceUpdated: 'تم تحديث الرصيد',
+    tonBalance: 'رصيد TON:',
+    refreshBalance: 'تحديث الرصيد',
+    sendRealTransaction: 'إرسال معاملة حقيقية',
+    sendTestTon: 'إرسال 0.01 TON (اختبار)',
+    insufficientBalance: 'رصيد TON غير كافي للمعاملة',
+    recentTransactions: 'المعاملات الأخيرة',
+    send: 'إرسال',
+    receive: 'استقبال',
+    pending: 'معلقة',
+    completed: 'مكتملة',
+    failed: 'فاشلة',
+    to: 'إلى:',
+    noTransactions: 'لا توجد معاملات بعد',
+    walletConnectedSuccessfully: 'تم ربط المحفظة بنجاح! ✅',
+    walletDisconnected: 'تم قطع الاتصال! 🔌',
+    tonWalletDisconnected: 'تم قطع الاتصال بمحفظة TON.',
+    addressCopied: 'تم نسخ العنوان! 📋',
+    walletAddressCopied: 'تم نسخ عنوان المحفظة إلى الحافظة.',
+    transactionSent: 'تم إرسال المعاملة! ✅',
+    transactionSentSuccess: 'تم إرسال',
+    transactionFailedDescription: 'فشل في إرسال المعاملة. يرجى المحاولة مرة أخرى.',
+    transactionFailed: 'فشل في المعاملة',
+    errorFetchingBalance: 'خطأ في جلب الرصيد',
+    couldNotFetchBalance: 'لم نتمكن من جلب رصيد TON الحقيقي',
+    connectionErrorDescription: 'حدث خطأ أثناء قطع الاتصال',
+    noWalletConnected: 'لا توجد محفظة متصلة',
+    connectWalletFirst: 'يرجى ربط المحفظة أولاً'
   },
   ru: {
     mining: 'Майнинг',
@@ -232,7 +304,43 @@ const translations: { [key: string]: { [key: string]: string } } = {
     linkCopied: 'Ссылка скопирована!',
     referralLinkCopied: 'Реферальная ссылка скопирована в буфер обмена.',
     joinSHROUKMining: 'Присоединяйтесь к SHROUK Mining',
-    mineCryptoWithCards: 'Майните криптовалюту с красивыми картами принцесс!'
+    mineCryptoWithCards: 'Майните криптовалюту с красивыми картами принцесс!',
+    // Wallet translations
+    connectTonWallet: 'Подключить TON кошелек',
+    connectToManage: 'Подключите кошелек для управления токенами $SHROUK и $TON',
+    supportedWallets: 'Поддерживаемые кошельки:',
+    connectionError: 'Произошла ошибка подключения. Попробуйте еще раз.',
+    walletAddress: 'Адрес кошелька',
+    disconnect: 'Отключить',
+    copy: 'Копировать',
+    balanceUpdated: 'Баланс обновлен',
+    tonBalance: 'Баланс TON:',
+    refreshBalance: 'Обновить баланс',
+    sendRealTransaction: 'Отправить реальную транзакцию',
+    sendTestTon: 'Отправить 0.01 TON (тест)',
+    insufficientBalance: 'Недостаточно TON для транзакции',
+    recentTransactions: 'Последние транзакции',
+    send: 'Отправить',
+    receive: 'Получить',
+    pending: 'Ожидание',
+    completed: 'Завершено',
+    failed: 'Неудачно',
+    to: 'К:',
+    noTransactions: 'Транзакций пока нет',
+    walletConnectedSuccessfully: 'Кошелек успешно подключен! ✅',
+    walletDisconnected: 'Отключен! 🔌',
+    tonWalletDisconnected: 'TON кошелек отключен.',
+    addressCopied: 'Адрес скопирован! 📋',
+    walletAddressCopied: 'Адрес кошелька скопирован в буфер обмена.',
+    transactionSent: 'Транзакция отправлена! ✅',
+    transactionSentSuccess: 'отправлено успешно',
+    transactionFailed: 'Транзакция не удалась',
+    transactionFailedDescription: 'Не удалось отправить транзакцию. Попробуйте еще раз.',
+    errorFetchingBalance: 'Ошибка получения баланса',
+    couldNotFetchBalance: 'Не удалось получить реальный баланс TON',
+    connectionErrorDescription: 'Произошла ошибка при отключении',
+    noWalletConnected: 'Кошелек не подключен',
+    connectWalletFirst: 'Сначала подключите кошелек'
   }
 };
 
