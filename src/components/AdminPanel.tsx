@@ -149,6 +149,48 @@ export const AdminPanel = () => {
     }
   });
 
+  // Delete card mutation
+  const deleteCardMutation = useMutation({
+    mutationFn: async (cardId: string) => {
+      const { error } = await supabase
+        .from('cards')
+        .delete()
+        .eq('id', cardId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'تم حذف البطاقة',
+        description: 'تم حذف البطاقة بنجاح',
+      });
+      queryClient.invalidateQueries({ queryKey: ['cards'] });
+    },
+    onError: () => {
+      toast({ title: t('error'), description: t('errorOccurred'), variant: "destructive" });
+    }
+  });
+
+  // Delete task mutation
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'تم حذف المهمة',
+        description: 'تم حذف المهمة بنجاح',
+      });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: () => {
+      toast({ title: t('error'), description: t('errorOccurred'), variant: "destructive" });
+    }
+  });
+
   // Add new card handler
   const handleAddCard = () => {
     if (!newCard.name || !newCard.hourlyYield || !newCard.price) {
@@ -173,6 +215,19 @@ export const AdminPanel = () => {
       return;
     }
     addTaskMutation.mutate(newTask);
+  };
+
+  // Delete handlers
+  const handleDeleteCard = (cardId: string) => {
+    if (confirm('هل أنت متأكد من حذف هذه البطاقة؟')) {
+      deleteCardMutation.mutate(cardId);
+    }
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    if (confirm('هل أنت متأكد من حذف هذه المهمة؟')) {
+      deleteTaskMutation.mutate(taskId);
+    }
   };
 
   // UI
@@ -411,7 +466,13 @@ export const AdminPanel = () => {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-red-500 hover:bg-red-50"
+                    onClick={() => handleDeleteCard(card.id)}
+                    disabled={deleteCardMutation.isPending}
+                  >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -449,7 +510,13 @@ export const AdminPanel = () => {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-red-500 hover:bg-red-50"
+                    onClick={() => handleDeleteTask(task.id)}
+                    disabled={deleteTaskMutation.isPending}
+                  >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
