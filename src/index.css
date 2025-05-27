@@ -90,7 +90,8 @@
   }
 
   body {
-    @apply bg-princess-gradient text-foreground min-h-screen;
+    @apply text-foreground min-h-screen;
+    background: linear-gradient(135deg, #FF69B4 0%, #FF1493 25%, #DC143C 50%, #B22222 75%, #8B0000 100%);
     background-attachment: fixed;
   }
 }
