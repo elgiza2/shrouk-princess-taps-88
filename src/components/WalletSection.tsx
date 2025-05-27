@@ -60,6 +60,51 @@ export const WalletSection = () => {
     };
   }, [tonConnectUI]);
 
+  // Real-time updates for SHROUK balance
+  useEffect(() => {
+    if (!wallet?.account?.address) return;
+
+    const channel = supabase
+      .channel('balance-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_balances',
+          filter: `user_address=eq.${wallet.account.address}`
+        },
+        (payload) => {
+          console.log('Balance updated:', payload);
+          if (payload.new && typeof payload.new === 'object') {
+            setShrougBalance(Number(payload.new.shrouk_balance) || 0);
+            setTonBalance(Number(payload.new.ton_balance) || 0);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_tap_points',
+          filter: `user_address=eq.${wallet.account.address}`
+        },
+        (payload) => {
+          console.log('Tap points updated:', payload);
+          if (payload.new && typeof payload.new === 'object') {
+            // Update SHROUK balance when tap points change
+            setShrougBalance(Number(payload.new.tap_points) || 0);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [wallet?.account?.address]);
+
   const fetchRealTonBalance = async () => {
     if (!wallet?.account?.address) return;
 
@@ -138,26 +183,45 @@ export const WalletSection = () => {
     if (!wallet?.account?.address) return;
 
     try {
-      const { data, error } = await supabase
+      // First check user_balances table
+      const { data: balanceData, error: balanceError } = await supabase
         .from('user_balances')
         .select('*')
         .eq('user_address', wallet.account.address)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading balance:', error);
+      // Also check user_tap_points for mining balance
+      const { data: tapData, error: tapError } = await supabase
+        .from('user_tap_points')
+        .select('tap_points')
+        .eq('user_address', wallet.account.address)
+        .maybeSingle();
+
+      if (balanceError && balanceError.code !== 'PGRST116') {
+        console.error('Error loading balance:', balanceError);
         return;
       }
 
-      if (data) {
-        setShrougBalance(data.shrouk_balance);
-        setTonBalance(data.ton_balance);
+      let shrougFromTap = 0;
+      if (tapData) {
+        shrougFromTap = Number(tapData.tap_points) || 0;
+      }
+
+      if (balanceData) {
+        // Use the higher value between tap points and stored balance
+        const maxShroug = Math.max(Number(balanceData.shrouk_balance) || 0, shrougFromTap);
+        setShrougBalance(maxShroug);
+        setTonBalance(Number(balanceData.ton_balance) || 0);
       } else {
+        // Create new balance record with mining points
+        setShrougBalance(shrougFromTap);
+        setTonBalance(0);
+        
         const { error: insertError } = await supabase
           .from('user_balances')
           .insert({
             user_address: wallet.account.address,
-            shrouk_balance: 0,
+            shrouk_balance: shrougFromTap,
             ton_balance: 0
           });
 
@@ -390,6 +454,7 @@ export const WalletSection = () => {
           <Coins className="w-8 h-8 mx-auto mb-2 text-princess-gold" />
           <h3 className="font-bold text-lg text-princess-pink">SHROUK</h3>
           <p className="text-2xl font-bold">{shrougBalance.toFixed(4)}</p>
+          <p className="text-xs text-gray-500 mt-1">From Mining & Tasks</p>
         </Card>
 
         <Card className="glass-card p-4 text-center">

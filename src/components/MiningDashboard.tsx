@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -75,7 +74,7 @@ export const MiningDashboard = () => {
     };
   }, [address]);
 
-  // Helper to update the user's tap points (Supabase)
+  // Helper to update the user's tap points and sync with wallet balance
   async function updateTapStats(
     changes: Partial<{
       tap_points: number;
@@ -85,10 +84,25 @@ export const MiningDashboard = () => {
     }>
   ) {
     if (!address) return;
+    
+    // Update tap points
     await supabase
       .from('user_tap_points')
       .update(changes)
       .eq('user_address', address);
+
+    // If tap_points changed, update the SHROUK balance in user_balances
+    if (changes.tap_points !== undefined) {
+      await supabase
+        .from('user_balances')
+        .upsert({
+          user_address: address,
+          shrouk_balance: changes.tap_points,
+          ton_balance: 0 // Keep existing TON balance, only update SHROUK
+        }, {
+          onConflict: 'user_address'
+        });
+    }
   }
 
   // Tap logic and sync
@@ -98,7 +112,8 @@ export const MiningDashboard = () => {
     if (tapsRemaining <= 0 || loading) return;
     setIsTapping(true);
     setTapsRemaining(prev => Math.max(0, prev - 1));
-    setShrougEarned(prev => prev + tapValue);
+    const newShrougBalance = shrougEarned + tapValue;
+    setShrougEarned(newShrougBalance);
 
     // Coins animation FX
     const rect = (event.target as HTMLElement).getBoundingClientRect();
@@ -120,29 +135,30 @@ export const MiningDashboard = () => {
     }, 1000);
     setTimeout(() => setIsTapping(false), 100);
 
-    // Sync to Supabase after tap
-    const newTapPoints = shrougEarned + tapValue + 1e-10; // small fudge for float
-    updateTapStats({ tap_points: newTapPoints });
+    // Sync to Supabase after tap - update both tap points and wallet balance
+    updateTapStats({ tap_points: newShrougBalance });
   };
 
   const refillTaps = async () => {
     if (shrougEarned < 2000) return;
-    setShrougEarned(prev => prev - 2000);
+    const newBalance = shrougEarned - 2000;
+    setShrougEarned(newBalance);
     setTapsRemaining(maxTaps);
-    // Sync points and possible refill
-    await updateTapStats({ tap_points: shrougEarned - 2000 });
+    // Sync points and balance
+    await updateTapStats({ tap_points: newBalance });
   };
 
   const upgradeTapCapacity = async () => {
     const upgradeCost = tapUpgradeLevel * 5000;
     if (shrougEarned < upgradeCost) return;
-    setShrougEarned(prev => prev - upgradeCost);
+    const newBalance = shrougEarned - upgradeCost;
+    setShrougEarned(newBalance);
     setMaxTaps(prev => prev + 1000);
     setTapsRemaining(prev => prev + 1000);
     setTapUpgradeLevel(prev => prev + 1);
 
     await updateTapStats({
-      tap_points: shrougEarned - upgradeCost,
+      tap_points: newBalance,
       max_taps: maxTaps + 1000,
       tap_upgrade_level: tapUpgradeLevel + 1,
     });
@@ -151,11 +167,12 @@ export const MiningDashboard = () => {
   const upgradeTapValue = async () => {
     const upgradeCost = tapValue * 10000;
     if (shrougEarned < upgradeCost) return;
-    setShrougEarned(prev => prev - upgradeCost);
+    const newBalance = shrougEarned - upgradeCost;
+    setShrougEarned(newBalance);
     setTapValue(prev => prev * 1.5);
 
     await updateTapStats({
-      tap_points: shrougEarned - upgradeCost,
+      tap_points: newBalance,
       tap_value: tapValue * 1.5,
     });
   };

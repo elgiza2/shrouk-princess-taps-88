@@ -1,20 +1,23 @@
 
 import { useEffect, useState } from "react";
+import { useTonWallet } from '@tonconnect/ui-react';
 
 /**
  * Hook to get the currently "logged-in" user's TON address.
- * In production, this should pull from wallet/provider context.
- * For now, returns a static demo address.
+ * Now uses the actual connected wallet address.
  */
 export function useUserAddress() {
-  // Replace with user wallet integration if needed.
-  const [address, setAddress] = useState<string | undefined>('demo-user-address');
-  // If integrating with wallet, update this hook accordingly.
+  const wallet = useTonWallet();
+  const [address, setAddress] = useState<string | undefined>();
 
-  // Optionally, if wallet context becomes available:
-  // useEffect(() => {
-  //   // setAddress(user's wallet address here)
-  // }, []);
+  useEffect(() => {
+    if (wallet?.account?.address) {
+      setAddress(wallet.account.address);
+    } else {
+      // Fallback to demo address if no wallet connected
+      setAddress('demo-user-address');
+    }
+  }, [wallet?.account?.address]);
 
   return address;
 }
