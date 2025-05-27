@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -64,12 +63,14 @@ export const TasksPage = () => {
     enabled: !!wallet?.account?.address,
   });
 
-  // Complete task mutation
+  // Complete task mutation with improved error handling
   const completeTaskMutation = useMutation({
     mutationFn: async (task: Task) => {
       if (!wallet?.account?.address) {
         throw new Error('No wallet connected');
       }
+
+      console.log('Completing task:', task.id, 'for user:', wallet.account.address);
 
       // Check if task is already completed
       const isCompleted = completedTasks.some(ct => ct.task_id === task.id);
@@ -80,12 +81,15 @@ export const TasksPage = () => {
       // Open task link if available
       if (task.link) {
         window.open(task.link, '_blank', 'noopener,noreferrer');
+        // Add a small delay to ensure the link opens before continuing
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
       
       // Extract reward amount from string (e.g., "100 SHROUK" -> 100)
       const rewardAmount = task.reward ? parseFloat(task.reward.replace(/[^\d.]/g, '')) || 0 : 0;
+      console.log('Reward amount extracted:', rewardAmount);
       
-      // Mark task as completed
+      // Mark task as completed first
       const { error: completionError } = await supabase
         .from('user_task_completions')
         .insert({
@@ -94,59 +98,85 @@ export const TasksPage = () => {
           reward_claimed: true
         });
       
-      if (completionError) throw completionError;
+      if (completionError) {
+        console.error('Task completion error:', completionError);
+        throw new Error('Failed to mark task as completed');
+      }
 
       // Update user balance if there's a reward
       if (rewardAmount > 0) {
-        // Get current balance
-        const { data: currentBalance, error: balanceError } = await supabase
-          .from('user_balances')
-          .select('shrouk_balance, ton_balance')
-          .eq('user_address', wallet.account.address)
-          .maybeSingle();
+        try {
+          // Get current balance with proper error handling
+          const { data: currentBalance, error: balanceError } = await supabase
+            .from('user_balances')
+            .select('shrouk_balance, ton_balance')
+            .eq('user_address', wallet.account.address)
+            .maybeSingle();
 
-        if (balanceError && balanceError.code !== 'PGRST116') {
-          throw balanceError;
-        }
+          if (balanceError && balanceError.code !== 'PGRST116') {
+            console.error('Balance fetch error:', balanceError);
+            throw balanceError;
+          }
 
-        const currentShroug = currentBalance?.shrouk_balance || 0;
-        const currentTon = currentBalance?.ton_balance || 0;
-        const newBalance = currentShroug + rewardAmount;
+          const currentShroug = currentBalance?.shrouk_balance || 0;
+          const currentTon = currentBalance?.ton_balance || 0;
+          const newBalance = currentShroug + rewardAmount;
 
-        // Update balance
-        const { error: updateError } = await supabase
-          .from('user_balances')
-          .upsert({
+          console.log('Updating balance from', currentShroug, 'to', newBalance);
+
+          // Update balance using upsert to avoid conflicts
+          const { error: updateError } = await supabase
+            .from('user_balances')
+            .upsert({
+              user_address: wallet.account.address,
+              shrouk_balance: newBalance,
+              ton_balance: currentTon
+            }, {
+              onConflict: 'user_address'
+            });
+
+          if (updateError) {
+            console.error('Balance update error:', updateError);
+            throw updateError;
+          }
+
+          // Also update tap points table
+          const { error: tapError } = await supabase
+            .from('user_tap_points')
+            .upsert({
+              user_address: wallet.account.address,
+              tap_points: newBalance,
+              max_taps: 1000,
+              tap_upgrade_level: 1,
+              tap_value: 0.001
+            }, {
+              onConflict: 'user_address'
+            });
+
+          if (tapError) {
+            console.error('Error updating tap points:', tapError);
+            // Don't throw error for tap points as it's not critical
+          }
+
+          // Record transaction
+          const { error: transactionError } = await supabase.from('transactions').insert({
             user_address: wallet.account.address,
-            shrouk_balance: newBalance,
-            ton_balance: currentTon
+            transaction_type: 'task_reward',
+            amount: rewardAmount,
+            currency: 'SHROUK',
+            status: 'completed'
           });
 
-        if (updateError) throw updateError;
-
-        // Also update tap points table
-        const { error: tapError } = await supabase
-          .from('user_tap_points')
-          .upsert({
-            user_address: wallet.account.address,
-            tap_points: newBalance,
-            max_taps: 1000,
-            tap_upgrade_level: 1,
-            tap_value: 0.001
-          });
-
-        if (tapError) {
-          console.error('Error updating tap points:', tapError);
+          if (transactionError) {
+            console.error('Transaction record error:', transactionError);
+            // Don't throw error for transaction recording as it's not critical
+          }
+        } catch (balanceUpdateError) {
+          console.error('Error updating balance:', balanceUpdateError);
+          // Even if balance update fails, the task is marked as completed
+          // We can show a warning to the user
+          throw new Error('Task completed but reward may not have been added. Please refresh and check your balance.');
         }
-
-        // Record transaction
-        await supabase.from('transactions').insert({
-          user_address: wallet.account.address,
-          transaction_type: 'task_reward',
-          amount: rewardAmount,
-          currency: 'SHROUK',
-          status: 'completed'
-        });
       }
       
       return { task, rewardAmount };
@@ -154,18 +184,27 @@ export const TasksPage = () => {
     onSuccess: ({ task, rewardAmount }) => {
       toast({
         title: t('taskCompleted'),
-        description: `${t('rewardReceived')} ${task.reward || ''}`,
+        description: rewardAmount > 0 ? `${t('rewardReceived')} ${rewardAmount} SHROUK` : t('taskCompleted'),
       });
       queryClient.invalidateQueries({ queryKey: ['user-task-completions'] });
       queryClient.invalidateQueries({ queryKey: ['user-balance'] });
       queryClient.invalidateQueries({ queryKey: ['user-tap-points'] });
     },
     onError: (error: any) => {
+      console.error('Task completion error:', error);
+      let errorMessage = t('taskCompletionError');
+      
+      if (error.message === 'Task already completed') {
+        errorMessage = t('taskAlreadyCompleted');
+      } else if (error.message === 'No wallet connected') {
+        errorMessage = t('connectWalletFirst');
+      } else if (error.message.includes('reward may not have been added')) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: t('taskError'),
-        description: error.message === 'Task already completed' ? t('taskAlreadyCompleted') : 
-                    error.message === 'No wallet connected' ? t('connectWalletFirst') : 
-                    t('taskCompletionError'),
+        description: errorMessage,
         variant: "destructive"
       });
     },

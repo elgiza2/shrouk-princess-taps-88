@@ -3,11 +3,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Crown, Coins, Star, Sparkles, Loader2 } from 'lucide-react';
+import { Crown, Coins, Star, Sparkles, Loader2, ShoppingCart, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTonWallet } from '@tonconnect/ui-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 interface PrincessCard {
   id: string;
   name: string;
@@ -20,6 +21,7 @@ interface PrincessCard {
   level?: number;
   image: string;
 }
+
 export const PrincessCards = () => {
   const {
     t
@@ -121,6 +123,8 @@ export const PrincessCards = () => {
     mutationFn: async ({ cardId, price, currency }: { cardId: string; price: number; currency: string; }) => {
       if (!wallet?.account?.address) throw new Error('No wallet connected');
 
+      console.log('Attempting to buy card:', { cardId, price, currency });
+
       // Check if user has enough balance with proper fallback values
       const currentBalance = currency === 'SHROUK' ? (userBalance?.shrouk_balance || 0) : (userBalance?.ton_balance || 0);
       console.log('Purchase attempt:', { cardId, price, currency, currentBalance, userBalance });
@@ -129,61 +133,88 @@ export const PrincessCards = () => {
         throw new Error('Insufficient balance');
       }
 
-      // Buy the card
-      const { error: insertError } = await supabase.from('user_cards').insert({
-        user_address: wallet.account.address,
-        card_id: cardId,
-        level: 1
-      });
-      if (insertError) {
-        console.error('Card purchase error:', insertError);
-        throw insertError;
+      // Check if user already owns this card
+      const existingCard = userCards.find(uc => uc.card_id === cardId);
+      if (existingCard) {
+        throw new Error('Card already owned');
       }
 
-      // Deduct balance using upsert to avoid conflicts
-      const newBalance = currentBalance - price;
-      const balanceUpdate = currency === 'SHROUK' ? {
-        user_address: wallet.account.address,
-        shrouk_balance: newBalance,
-        ton_balance: userBalance?.ton_balance || 0
-      } : {
-        user_address: wallet.account.address,
-        ton_balance: newBalance,
-        shrouk_balance: userBalance?.shrouk_balance || 0
-      };
-      
-      const { error: balanceError } = await supabase.from('user_balances').upsert(balanceUpdate, {
-        onConflict: 'user_address'
-      });
-      if (balanceError) {
-        console.error('Balance update error:', balanceError);
-        throw balanceError;
-      }
+      try {
+        // Buy the card
+        const { error: insertError } = await supabase.from('user_cards').insert({
+          user_address: wallet.account.address,
+          card_id: cardId,
+          level: 1
+        });
+        
+        if (insertError) {
+          console.error('Card purchase error:', insertError);
+          throw new Error('Failed to purchase card');
+        }
 
-      // Record transaction
-      await supabase.from('transactions').insert({
-        user_address: wallet.account.address,
-        transaction_type: 'purchase',
-        amount: price,
-        currency: currency,
-        status: 'completed'
-      });
-      
-      return { cardId, price, currency };
+        // Deduct balance using upsert to avoid conflicts
+        const newBalance = currentBalance - price;
+        const balanceUpdate = currency === 'SHROUK' ? {
+          user_address: wallet.account.address,
+          shrouk_balance: newBalance,
+          ton_balance: userBalance?.ton_balance || 0
+        } : {
+          user_address: wallet.account.address,
+          ton_balance: newBalance,
+          shrouk_balance: userBalance?.shrouk_balance || 0
+        };
+        
+        const { error: balanceError } = await supabase.from('user_balances').upsert(balanceUpdate, {
+          onConflict: 'user_address'
+        });
+        
+        if (balanceError) {
+          console.error('Balance update error:', balanceError);
+          // Try to rollback the card purchase
+          await supabase.from('user_cards').delete()
+            .eq('user_address', wallet.account.address)
+            .eq('card_id', cardId);
+          throw new Error('Failed to update balance');
+        }
+
+        // Record transaction
+        await supabase.from('transactions').insert({
+          user_address: wallet.account.address,
+          transaction_type: 'purchase',
+          amount: price,
+          currency: currency,
+          status: 'completed'
+        });
+        
+        return { cardId, price, currency };
+      } catch (error) {
+        console.error('Purchase transaction failed:', error);
+        throw error;
+      }
     },
     onSuccess: ({ price, currency }) => {
       toast({
         title: t('cardPurchased'),
-        description: `${t('cardBoughtFor')} ${price} ${currency}`
+        description: `${t('cardBoughtFor')} ${price.toLocaleString()} ${currency}`,
       });
       queryClient.invalidateQueries({ queryKey: ['user-cards'] });
       queryClient.invalidateQueries({ queryKey: ['user-balance'] });
     },
     onError: (error: any) => {
       console.error('Purchase error:', error);
+      let errorMessage = t('purchaseError');
+      
+      if (error.message === 'Insufficient balance') {
+        errorMessage = t('insufficientBalance');
+      } else if (error.message === 'Card already owned') {
+        errorMessage = 'هذه البطاقة مملوكة بالفعل';
+      } else if (error.message === 'No wallet connected') {
+        errorMessage = t('connectWalletFirst');
+      }
+      
       toast({
         title: t('purchaseFailed'),
-        description: error.message === 'Insufficient balance' ? t('insufficientBalance') : t('purchaseError'),
+        description: errorMessage,
         variant: "destructive"
       });
     }
@@ -338,6 +369,17 @@ export const PrincessCards = () => {
     console.log('Balance check:', { price, currency, balance, canAfford: balance >= price });
     return balance >= price;
   };
+  const getPurchaseButtonText = (card: PrincessCard) => {
+    if (buyCardMutation.isPending) return '';
+    if (!canAfford(card.price, card.currency)) return t('insufficientBalance');
+    return `${t('buyCard')} - ${card.price.toLocaleString()} ${card.currency}`;
+  };
+  const getUpgradeButtonText = (ownedCard: any, upgradeCost: number) => {
+    if (upgradeCardMutation.isPending) return '';
+    if (!canAfford(upgradeCost, 'SHROUK')) return t('insufficientBalance');
+    return `${t('upgrade')} → Lv.${ownedCard.level + 1} (${upgradeCost.toLocaleString()} SHROUK)`;
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
@@ -454,21 +496,34 @@ export const PrincessCards = () => {
                     </div>
                   </div>
 
-                  {/* Action Buttons - Mobile Optimized */}
-                  <div className="pt-1">
+                  {/* Enhanced Action Buttons */}
+                  <div className="pt-2 space-y-2">
                     {!isOwned ? (
                       <Button 
                         onClick={() => buyCardMutation.mutate({ cardId: card.id, price: card.price, currency: card.currency })}
                         size="sm" 
-                        disabled={buyCardMutation.isPending || !canAfford(card.price, card.currency)} 
-                        className="princess-button w-full h-8 font-bold shadow-md hover:shadow-lg transition-all duration-300 text-xs mx-0 px-[6px]"
+                        disabled={buyCardMutation.isPending || !canAfford(card.price, card.currency) || !wallet?.account?.address} 
+                        className={`w-full h-9 font-bold shadow-md hover:shadow-lg transition-all duration-300 text-xs ${
+                          canAfford(card.price, card.currency) && wallet?.account?.address
+                            ? 'princess-button bg-gradient-to-r from-princess-pink to-princess-purple text-white hover:scale-105' 
+                            : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                        }`}
                       >
                         {buyCardMutation.isPending ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : !canAfford(card.price, card.currency) ? (
-                          t('insufficientBalance')
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            <span>جاري الشراء...</span>
+                          </div>
+                        ) : !wallet?.account?.address ? (
+                          <div className="flex items-center gap-2">
+                            <ShoppingCart className="w-3 h-3" />
+                            <span>اربط المحفظة أولاً</span>
+                          </div>
                         ) : (
-                          t('buyCard')
+                          <div className="flex items-center gap-2">
+                            <ShoppingCart className="w-3 h-3" />
+                            <span>{getPurchaseButtonText(card)}</span>
+                          </div>
                         )}
                       </Button>
                     ) : (
@@ -476,17 +531,28 @@ export const PrincessCards = () => {
                         onClick={() => upgradeCardMutation.mutate({ cardId: card.id, upgradeCost })}
                         size="sm" 
                         variant="outline" 
-                        className="w-full h-8 text-xs font-bold border-2 border-princess-purple text-princess-purple hover:bg-princess-purple hover:text-white shadow-md hover:shadow-lg transition-all duration-300" 
-                        disabled={upgradeCardMutation.isPending || !canAfford(upgradeCost, 'SHROUK')}
+                        className="w-full h-9 text-xs font-bold border-2 border-princess-purple text-princess-purple hover:bg-princess-purple hover:text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105" 
+                        disabled={upgradeCardMutation.isPending || !canAfford(upgradeCost, 'SHROUK') || !wallet?.account?.address}
                       >
                         {upgradeCardMutation.isPending ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : !canAfford(upgradeCost, 'SHROUK') ? (
-                          t('insufficientBalance')
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            <span>جاري الترقية...</span>
+                          </div>
                         ) : (
-                          `${t('upgrade')} (Lv.${ownedCard.level + 1}) - ${upgradeCost.toLocaleString()}`
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="w-3 h-3" />
+                            <span>{getUpgradeButtonText(ownedCard, upgradeCost)}</span>
+                          </div>
                         )}
                       </Button>
+                    )}
+                    
+                    {/* Additional info for owned cards */}
+                    {isOwned && (
+                      <div className="text-xs text-center text-green-600 bg-green-50 py-1 rounded">
+                        ✓ مملوكة - المستوى {ownedCard.level}
+                      </div>
                     )}
                   </div>
                 </div>
