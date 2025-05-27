@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CheckCircle, Calendar, Share, ShoppingBag, Gift } from 'lucide-react';
+import { CheckCircle, Calendar, Share, ShoppingBag, Gift, Users, Target, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Task {
@@ -14,6 +15,7 @@ interface Task {
   reward: string;
   completed: boolean;
   icon: React.ComponentType<any>;
+  category: 'daily' | 'main' | 'partner';
 }
 
 interface TasksPageProps {
@@ -26,37 +28,73 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
   const [adminTapCount, setAdminTapCount] = useState(0);
   
   const [tasks, setTasks] = useState<Task[]>([
+    // Daily Tasks
     {
       id: 'daily-login',
-      title: t('dailyLogin'),
-      description: 'Login to the app every day',
+      title: 'تسجيل دخول يومي',
+      description: 'سجل دخولك إلى التطبيق كل يوم',
       reward: '+0.1 SHROUK',
       completed: true,
-      icon: Calendar
+      icon: Calendar,
+      category: 'daily'
     },
     {
-      id: 'share-app',
-      title: t('shareApp'),
-      description: 'Share the app with your friends',
-      reward: '+0.2 SHROUK',
+      id: 'daily-mining',
+      title: 'تعدين يومي',
+      description: 'قم بالتعدين لمدة 30 دقيقة يومياً',
+      reward: '+0.05 SHROUK',
       completed: false,
-      icon: Share
+      icon: Target,
+      category: 'daily'
     },
+    
+    // Main Tasks
     {
       id: 'buy-card',
-      title: 'Buy Princess Card',
-      description: 'Purchase any princess card',
+      title: 'شراء بطاقة أميرة',
+      description: 'قم بشراء أي بطاقة أميرة',
       reward: '+0.5 SHROUK',
       completed: false,
-      icon: ShoppingBag
+      icon: ShoppingBag,
+      category: 'main'
     },
     {
       id: 'complete-all',
-      title: 'Complete All Tasks',
-      description: 'Finish all daily tasks for bonus',
+      title: 'إكمال جميع المهام',
+      description: 'أنهي جميع المهام اليومية للحصول على مكافأة',
       reward: '+1.0 SHROUK + 0.1 TON',
       completed: false,
-      icon: Gift
+      icon: Gift,
+      category: 'main'
+    },
+    {
+      id: 'reach-level-10',
+      title: 'الوصول للمستوى 10',
+      description: 'اوصل إلى المستوى 10 في التعدين',
+      reward: '+2.0 SHROUK',
+      completed: false,
+      icon: Star,
+      category: 'main'
+    },
+    
+    // Partner Tasks
+    {
+      id: 'share-app',
+      title: 'مشاركة التطبيق',
+      description: 'شارك التطبيق مع أصدقائك',
+      reward: '+0.2 SHROUK',
+      completed: false,
+      icon: Share,
+      category: 'partner'
+    },
+    {
+      id: 'invite-friends',
+      title: 'دعوة 5 أصدقاء',
+      description: 'ادع 5 أصدقاء للانضمام',
+      reward: '+1.0 SHROUK',
+      completed: false,
+      icon: Users,
+      category: 'partner'
     }
   ]);
 
@@ -67,8 +105,8 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
     
     const task = tasks.find(t => t.id === taskId);
     toast({
-      title: "Task Completed!",
-      description: `Earned: ${task?.reward}`,
+      title: "تم إكمال المهمة!",
+      description: `المكافأة المحصلة: ${task?.reward}`,
     });
   };
 
@@ -80,31 +118,75 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
       setAdminTapCount(0);
       onAdminAccess?.();
       toast({
-        title: "Admin Access Granted!",
-        description: "Welcome to the admin panel",
-      });
-    } else {
-      toast({
-        title: `${5 - newCount} more taps for admin access`,
-        description: "Keep tapping on 'Daily Tasks'",
+        title: "تم منح صلاحية الأدمن!",
+        description: "مرحباً بك في لوحة الأدمن",
       });
     }
   };
 
-  const completedCount = tasks.filter(t => t.completed).length;
-  const totalTasks = tasks.length;
+  const getTasksByCategory = (category: 'daily' | 'main' | 'partner') => {
+    return tasks.filter(task => task.category === category);
+  };
 
-  return (
-    <div className="space-y-6">
-      {/* Progress Overview */}
-      <Card className="glass-card p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 
-            className="font-bold text-lg cursor-pointer select-none"
-            onClick={handleHeaderTap}
-          >
-            Daily Tasks
-          </h2>
+  const getCompletedCount = (category: 'daily' | 'main' | 'partner') => {
+    const categoryTasks = getTasksByCategory(category);
+    return categoryTasks.filter(t => t.completed).length;
+  };
+
+  const TaskCard = ({ task }: { task: Task }) => {
+    const Icon = task.icon;
+    
+    return (
+      <Card className="glass-card p-4 hover:shadow-lg transition-all duration-300">
+        <div className="flex items-center gap-4">
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+            task.completed 
+              ? 'bg-green-100 text-green-600' 
+              : 'bg-princess-pink/20 text-princess-pink'
+          }`}>
+            {task.completed ? (
+              <CheckCircle className="w-6 h-6" />
+            ) : (
+              <Icon className="w-6 h-6" />
+            )}
+          </div>
+          
+          <div className="flex-1">
+            <h3 className="font-bold text-right">{task.title}</h3>
+            <p className="text-sm text-gray-600 text-right">{task.description}</p>
+            <p className="text-sm font-medium text-princess-purple mt-1 text-right">
+              {task.reward}
+            </p>
+          </div>
+          
+          <div>
+            {task.completed ? (
+              <Badge className="bg-green-500 text-white">
+                مكتملة
+              </Badge>
+            ) : (
+              <Button
+                onClick={() => completeTask(task.id)}
+                size="sm"
+                className="princess-button"
+              >
+                استلام
+              </Button>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  };
+
+  const CategoryProgress = ({ category }: { category: 'daily' | 'main' | 'partner' }) => {
+    const categoryTasks = getTasksByCategory(category);
+    const completedCount = getCompletedCount(category);
+    const totalTasks = categoryTasks.length;
+    
+    return (
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
           <Badge variant="outline" className="bg-princess-pink/20 text-princess-pink">
             {completedCount}/{totalTasks}
           </Badge>
@@ -112,59 +194,60 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div 
             className="bg-gradient-to-r from-princess-pink to-princess-purple h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(completedCount / totalTasks) * 100}%` }}
+            style={{ width: `${totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0}%` }}
           />
         </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <Card className="glass-card p-4">
+        <h2 
+          className="font-bold text-lg cursor-pointer select-none text-center"
+          onClick={handleHeaderTap}
+        >
+          مركز المهام
+        </h2>
       </Card>
 
-      {/* Task List */}
-      <div className="space-y-4">
-        {tasks.map((task) => {
-          const Icon = task.icon;
-          
-          return (
-            <Card key={task.id} className="glass-card p-4">
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                  task.completed 
-                    ? 'bg-green-100 text-green-600' 
-                    : 'bg-princess-pink/20 text-princess-pink'
-                }`}>
-                  {task.completed ? (
-                    <CheckCircle className="w-6 h-6" />
-                  ) : (
-                    <Icon className="w-6 h-6" />
-                  )}
-                </div>
-                
-                <div className="flex-1">
-                  <h3 className="font-bold">{task.title}</h3>
-                  <p className="text-sm text-gray-600">{task.description}</p>
-                  <p className="text-sm font-medium text-princess-purple mt-1">
-                    {task.reward}
-                  </p>
-                </div>
-                
-                <div>
-                  {task.completed ? (
-                    <Badge className="bg-green-500 text-white">
-                      Completed
-                    </Badge>
-                  ) : (
-                    <Button
-                      onClick={() => completeTask(task.id)}
-                      size="sm"
-                      className="princess-button"
-                    >
-                      Claim
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+      {/* Tabs */}
+      <Tabs defaultValue="daily" className="w-full" dir="rtl">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="daily">المهام اليومية</TabsTrigger>
+          <TabsTrigger value="main">المهام الرئيسية</TabsTrigger>
+          <TabsTrigger value="partner">مهام الشركاء</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="daily" className="space-y-4">
+          <CategoryProgress category="daily" />
+          <div className="space-y-4">
+            {getTasksByCategory('daily').map((task) => (
+              <TaskCard key={task.id} task={task} />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="main" className="space-y-4">
+          <CategoryProgress category="main" />
+          <div className="space-y-4">
+            {getTasksByCategory('main').map((task) => (
+              <TaskCard key={task.id} task={task} />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="partner" className="space-y-4">
+          <CategoryProgress category="partner" />
+          <div className="space-y-4">
+            {getTasksByCategory('partner').map((task) => (
+              <TaskCard key={task.id} task={task} />
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
