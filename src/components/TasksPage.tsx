@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +17,7 @@ interface Task {
   reward: string | null;
   completed: boolean | null;
   category: 'daily' | 'main' | 'partner' | string;
+  link: string | null;
 }
 
 interface TasksPageProps {
@@ -40,12 +41,16 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
     },
   });
 
-  // Task click now only affects UX/toast, not backend
-  const completeTask = (taskId: string) => {
-    const task = tasks?.find(t => t.id === taskId);
+  // Task completion handler
+  const completeTask = (task: Task) => {
+    if (task.link) {
+      // Open the task link in a new tab
+      window.open(task.link, '_blank', 'noopener,noreferrer');
+    }
+    
     toast({
-      title: t('taskCompleted'),
-      description: `${t('rewardReceived')} ${task?.reward ?? ''}`,
+      title: 'تم فتح رابط المهمة',
+      description: `أكمل المهمة واحصل على ${task.reward ?? ''}`,
     });
   };
 
@@ -60,7 +65,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
 
   const TaskCard = ({ task }: { task: Task }) => {
     return (
-      <Card className="glass-card p-4 hover:shadow-lg transition-all duration-300 py-[6px] px-[6px]">
+      <Card className="glass-card p-4 hover:shadow-lg transition-all duration-300">
         <div className="flex items-center gap-4">
           <div
             className={`w-12 h-12 rounded-full flex items-center justify-center ${
@@ -77,22 +82,39 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
           </div>
           <div className="flex-1">
             <h3 className="font-bold text-right">{task.title}</h3>
-            <p className="text-sm font-medium text-princess-purple mt-1 text-right">
-              {task.reward || ''}
+            <p className="text-sm text-gray-600 mt-1 text-right">
+              {task.description}
             </p>
+            <p className="text-sm font-medium text-princess-purple mt-1 text-right">
+              المكافأة: {task.reward || ''}
+            </p>
+            {task.link && (
+              <div className="flex items-center justify-end gap-1 mt-2">
+                <ExternalLink className="w-4 h-4 text-blue-500" />
+                <span className="text-xs text-blue-500">انقر للانتقال للمهمة</span>
+              </div>
+            )}
           </div>
           <div>
             {task.completed ? (
-              <Badge className="text-white bg-purple-800">
-                {t('completed')}
+              <Badge className="text-white bg-green-600">
+                مكتملة
               </Badge>
             ) : (
               <Button 
-                onClick={() => completeTask(task.id)}
+                onClick={() => completeTask(task)}
                 size="sm" 
-                className="princess-button"
+                className="princess-button flex items-center gap-2"
+                disabled={!task.link}
               >
-                {t('claim')}
+                {task.link ? (
+                  <>
+                    <ExternalLink className="w-4 h-4" />
+                    ابدأ المهمة
+                  </>
+                ) : (
+                  'قريباً'
+                )}
               </Button>
             )}
           </div>
@@ -133,28 +155,29 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
     <div className="space-y-6">
       {/* Header */}
       <Card className="glass-card p-4">
-        <h2 
-          className="font-bold text-lg cursor-pointer select-none text-center" 
-        >
-          {t('taskCenter')}
+        <h2 className="font-bold text-lg text-center">
+          مركز المهام
         </h2>
+        <p className="text-sm text-center text-gray-600 mt-2">
+          أكمل المهام واحصل على المكافآت
+        </p>
       </Card>
 
       {/* Tabs */}
       <Tabs defaultValue="daily" className="w-full" dir="rtl">
         <TabsList className="grid w-full grid-cols-3 mb-6">
-          <TabsTrigger value="daily">{t('dailyTasks')}</TabsTrigger>
-          <TabsTrigger value="main">{t('mainTasks')}</TabsTrigger>
-          <TabsTrigger value="partner">{t('partnerTasks')}</TabsTrigger>
+          <TabsTrigger value="daily">المهام اليومية</TabsTrigger>
+          <TabsTrigger value="main">المهام الرئيسية</TabsTrigger>
+          <TabsTrigger value="partner">مهام الشراكة</TabsTrigger>
         </TabsList>
 
         <TabsContent value="daily" className="space-y-4">
           <CategoryProgress category="daily" />
           <div className="space-y-4">
             {isLoading ? (
-              <p className="text-sm text-center text-muted-foreground">{t('loading')}...</p>
+              <p className="text-sm text-center text-muted-foreground">جاري التحميل...</p>
             ) : getTasksByCategory('daily').length === 0 ? (
-              <p className="text-sm text-center text-muted-foreground">{t('noTasks')}</p>
+              <p className="text-sm text-center text-muted-foreground">لا توجد مهام يومية</p>
             ) : (
               getTasksByCategory('daily').map(task => (
                 <TaskCard key={task.id} task={task} />
@@ -167,9 +190,9 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
           <CategoryProgress category="main" />
           <div className="space-y-4">
             {isLoading ? (
-              <p className="text-sm text-center text-muted-foreground">{t('loading')}...</p>
+              <p className="text-sm text-center text-muted-foreground">جاري التحميل...</p>
             ) : getTasksByCategory('main').length === 0 ? (
-              <p className="text-sm text-center text-muted-foreground">{t('noTasks')}</p>
+              <p className="text-sm text-center text-muted-foreground">لا توجد مهام رئيسية</p>
             ) : (
               getTasksByCategory('main').map(task => (
                 <TaskCard key={task.id} task={task} />
@@ -182,9 +205,9 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
           <CategoryProgress category="partner" />
           <div className="space-y-4">
             {isLoading ? (
-              <p className="text-sm text-center text-muted-foreground">{t('loading')}...</p>
+              <p className="text-sm text-center text-muted-foreground">جاري التحميل...</p>
             ) : getTasksByCategory('partner').length === 0 ? (
-              <p className="text-sm text-center text-muted-foreground">{t('noTasks')}</p>
+              <p className="text-sm text-center text-muted-foreground">لا توجد مهام شراكة</p>
             ) : (
               getTasksByCategory('partner').map(task => (
                 <TaskCard key={task.id} task={task} />

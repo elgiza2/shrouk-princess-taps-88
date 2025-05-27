@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, Trash2, Save } from 'lucide-react';
+import { Plus, Trash2, Save, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -60,7 +60,8 @@ export const AdminPanel = () => {
     title: '',
     description: '',
     reward: '',
-    category: 'daily'
+    category: 'daily',
+    link: ''
   });
 
   // Add card mutation
@@ -109,6 +110,7 @@ export const AdminPanel = () => {
           description: task.description,
           reward: task.reward,
           category: task.category,
+          link: task.link,
           completed: false
         }
       ]);
@@ -125,7 +127,8 @@ export const AdminPanel = () => {
         title: '',
         description: '',
         reward: '',
-        category: 'daily'
+        category: 'daily',
+        link: ''
       });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
@@ -149,10 +152,10 @@ export const AdminPanel = () => {
 
   // Add new task handler
   const handleAddTask = () => {
-    if (!newTask.title || !newTask.reward || !newTask.category) {
+    if (!newTask.title || !newTask.reward || !newTask.category || !newTask.link) {
       toast({
         title: t('missingInformation'),
-        description: t('fillAllFields'),
+        description: 'يرجى ملء جميع الحقول بما في ذلك الرابط',
         variant: "destructive"
       });
       return;
@@ -305,16 +308,16 @@ export const AdminPanel = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="taskTitle">{t('taskTitle')}</Label>
+                <Label htmlFor="taskTitle">عنوان المهمة</Label>
                 <Input
                   id="taskTitle"
                   value={newTask.title}
                   onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="e.g., Buy a card"
+                  placeholder="مثال: شراء بطاقة"
                 />
               </div>
               <div>
-                <Label htmlFor="taskCategory">{t('category')}</Label>
+                <Label htmlFor="taskCategory">الفئة</Label>
                 <Select
                   value={newTask.category}
                   onValueChange={(value) => setNewTask(prev => ({ ...prev, category: value }))}
@@ -323,15 +326,27 @@ export const AdminPanel = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="daily">{t('daily')}</SelectItem>
-                    <SelectItem value="main">{t('main')}</SelectItem>
-                    <SelectItem value="partner">{t('partner')}</SelectItem>
+                    <SelectItem value="daily">يومية</SelectItem>
+                    <SelectItem value="main">رئيسية</SelectItem>
+                    <SelectItem value="partner">شراكة</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div>
-              <Label htmlFor="taskReward">{t('reward')}</Label>
+              <Label htmlFor="taskLink">رابط المهمة *</Label>
+              <Input
+                id="taskLink"
+                type="url"
+                value={newTask.link}
+                onChange={(e) => setNewTask(prev => ({ ...prev, link: e.target.value }))}
+                placeholder="https://example.com"
+                className="text-left"
+              />
+              <p className="text-xs text-gray-500 mt-1">يجب إدخال رابط صحيح للمهمة</p>
+            </div>
+            <div>
+              <Label htmlFor="taskReward">المكافأة</Label>
               <Input
                 id="taskReward"
                 value={newTask.reward}
@@ -340,12 +355,12 @@ export const AdminPanel = () => {
               />
             </div>
             <div>
-              <Label htmlFor="taskDescription">{t('description')}</Label>
+              <Label htmlFor="taskDescription">الوصف</Label>
               <Textarea
                 id="taskDescription"
                 value={newTask.description}
                 onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="A new daily task for users"
+                placeholder="وصف المهمة..."
                 rows={2}
               />
             </div>
@@ -384,7 +399,6 @@ export const AdminPanel = () => {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  {/* Future: Edit card */}
                   <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50">
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -397,22 +411,32 @@ export const AdminPanel = () => {
 
       {/* Tasks Management */}
       <Card className="glass-card p-4">
-        <h3 className="font-bold mb-4">{t('manageTasks')}</h3>
+        <h3 className="font-bold mb-4">إدارة المهام</h3>
         <div className="space-y-3">
           {loadingTasks ? (
             <p className="text-center text-gray-400">{t('loading')}...</p>
           ) : !tasks || tasks.length === 0 ? (
-            <p className="text-center text-muted-foreground">{t('noTasks')}</p>
+            <p className="text-center text-muted-foreground">لا توجد مهام</p>
           ) : (
             tasks.map((task, index) => (
               <div key={task.id} className="flex items-center justify-between p-3 bg-white/10 rounded-lg">
-                <div>
+                <div className="flex-1">
                   <p className="font-medium">{task.title}</p>
                   <p className="text-xs text-gray-600 truncate max-w-xs">{task.description}</p>
-                  <p className="text-xs text-princess-purple">{t('category')}: {task.category}</p>
+                  <p className="text-xs text-princess-purple">الفئة: {task.category}</p>
+                  {task.link && (
+                    <a 
+                      href={task.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1 mt-1"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      عرض الرابط
+                    </a>
+                  )}
                 </div>
                 <div className="flex gap-2">
-                  {/* Future: Edit task */}
                   <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50">
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -425,4 +449,3 @@ export const AdminPanel = () => {
     </div>
   );
 };
-// ... file is getting long, consider refactoring after this!
