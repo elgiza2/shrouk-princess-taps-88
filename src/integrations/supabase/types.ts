@@ -144,6 +144,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tap_points: {
+        Row: {
+          created_at: string | null
+          last_tap_at: string | null
+          max_taps: number
+          tap_points: number
+          tap_upgrade_level: number
+          tap_value: number
+          updated_at: string | null
+          user_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          last_tap_at?: string | null
+          max_taps?: number
+          tap_points?: number
+          tap_upgrade_level?: number
+          tap_value?: number
+          updated_at?: string | null
+          user_address: string
+        }
+        Update: {
+          created_at?: string | null
+          last_tap_at?: string | null
+          max_taps?: number
+          tap_points?: number
+          tap_upgrade_level?: number
+          tap_value?: number
+          updated_at?: string | null
+          user_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
