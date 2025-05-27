@@ -113,8 +113,13 @@ export const PrincessCards = () => {
     mutationFn: async ({ cardId, price, currency }: { cardId: string; price: number; currency: string }) => {
       if (!wallet?.account?.address) throw new Error('No wallet connected');
       
-      // Check if user has enough balance
-      const currentBalance = userBalance?.[currency.toLowerCase() + '_balance'] || 0;
+      // Check if user has enough balance with proper fallback values
+      const currentBalance = currency === 'SHROUK' 
+        ? (userBalance?.shrouk_balance || 0)
+        : (userBalance?.ton_balance || 0);
+        
+      console.log('Purchase attempt:', { cardId, price, currency, currentBalance, userBalance });
+      
       if (currentBalance < price) {
         throw new Error('Insufficient balance');
       }
@@ -133,16 +138,20 @@ export const PrincessCards = () => {
       // Deduct balance
       const newBalance = currentBalance - price;
       const balanceUpdate = currency === 'SHROUK' 
-        ? { shrouk_balance: newBalance }
-        : { ton_balance: newBalance };
+        ? { 
+            shrouk_balance: newBalance,
+            ton_balance: userBalance?.ton_balance || 0
+          }
+        : { 
+            ton_balance: newBalance,
+            shrouk_balance: userBalance?.shrouk_balance || 0
+          };
       
       const { error: balanceError } = await supabase
         .from('user_balances')
         .upsert({
           user_address: wallet.account.address,
-          ...balanceUpdate,
-          [currency === 'SHROUK' ? 'ton_balance' : 'shrouk_balance']: 
-            userBalance?.[currency === 'SHROUK' ? 'ton_balance' : 'shrouk_balance'] || 0
+          ...balanceUpdate
         });
       
       if (balanceError) throw balanceError;
@@ -167,6 +176,7 @@ export const PrincessCards = () => {
       queryClient.invalidateQueries({ queryKey: ['user-balance'] });
     },
     onError: (error: any) => {
+      console.error('Purchase error:', error);
       toast({
         title: t('purchaseFailed'),
         description: error.message === 'Insufficient balance' ? t('insufficientBalance') : t('purchaseError'),
@@ -181,6 +191,8 @@ export const PrincessCards = () => {
       if (!wallet?.account?.address) throw new Error('No wallet connected');
       
       const currentBalance = userBalance?.shrouk_balance || 0;
+      console.log('Upgrade attempt:', { cardId, upgradeCost, currentBalance });
+      
       if (currentBalance < upgradeCost) {
         throw new Error('Insufficient balance');
       }
@@ -207,7 +219,10 @@ export const PrincessCards = () => {
       // Deduct balance
       const { error: balanceError } = await supabase
         .from('user_balances')
-        .update({ shrouk_balance: currentBalance - upgradeCost })
+        .update({ 
+          shrouk_balance: currentBalance - upgradeCost,
+          ton_balance: userBalance?.ton_balance || 0
+        })
         .eq('user_address', wallet.account.address);
       
       if (balanceError) throw balanceError;
@@ -232,6 +247,7 @@ export const PrincessCards = () => {
       queryClient.invalidateQueries({ queryKey: ['user-balance'] });
     },
     onError: (error: any) => {
+      console.error('Upgrade error:', error);
       toast({
         title: t('upgradeFailed'),
         description: error.message === 'Insufficient balance' ? t('insufficientBalance') : t('upgradeError'),
@@ -299,8 +315,16 @@ export const PrincessCards = () => {
   };
 
   const canAfford = (price: number, currency: string) => {
-    if (!userBalance) return false;
-    const balance = currency === 'SHROUK' ? userBalance.shrouk_balance : userBalance.ton_balance;
+    if (!userBalance) {
+      console.log('No user balance available');
+      return false;
+    }
+    
+    const balance = currency === 'SHROUK' 
+      ? (userBalance.shrouk_balance || 0) 
+      : (userBalance.ton_balance || 0);
+    
+    console.log('Balance check:', { price, currency, balance, canAfford: balance >= price });
     return balance >= price;
   };
 
@@ -349,6 +373,16 @@ export const PrincessCards = () => {
           </div>
         </div>
       </Card>
+
+      {/* Debug Balance Info - Remove this in production */}
+      {userBalance && (
+        <Card className="glass-card p-2 bg-blue-50/20 border border-blue-200">
+          <div className="text-xs">
+            <p>Debug: SHROUK Balance: {userBalance.shrouk_balance || 0}</p>
+            <p>Debug: TON Balance: {userBalance.ton_balance || 0}</p>
+          </div>
+        </Card>
+      )}
 
       {/* Princess Cards Grid */}
       <div className="grid grid-cols-1 gap-4">
