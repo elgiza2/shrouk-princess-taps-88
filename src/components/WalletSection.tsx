@@ -7,7 +7,6 @@ import { Wallet, Coins, ArrowUpDown, Copy, Send, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TonConnectButton, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Address } from '@ton/core';
 
 export const WalletSection = () => {
   const { t } = useLanguage();
@@ -23,9 +22,12 @@ export const WalletSection = () => {
   // Load user balance from Supabase when wallet connects
   useEffect(() => {
     if (wallet?.account?.address) {
+      console.log('Wallet connected:', wallet.account.address);
       loadUserBalance();
       loadUserTransactions();
       fetchRealTonBalance();
+    } else {
+      console.log('No wallet connected');
     }
   }, [wallet?.account?.address]);
 
@@ -34,21 +36,45 @@ export const WalletSection = () => {
 
     setIsLoadingBalance(true);
     try {
-      // Fetch real TON balance from TON blockchain
+      console.log('Fetching balance for:', wallet.account.address);
+      
+      // Use TON API v2 for better reliability
       const response = await fetch(
-        `https://toncenter.com/api/v2/getAddressBalance?address=${wallet.account.address}`
+        `https://toncenter.com/api/v2/getAddressBalance?address=${wallet.account.address}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
+      
+      console.log('Balance API response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        if (data.ok) {
+        console.log('Balance API response:', data);
+        
+        if (data.ok && data.result !== undefined) {
           // Convert from nanotons to TON (1 TON = 1e9 nanotons)
           const realBalance = parseFloat(data.result) / 1e9;
+          console.log('Real balance:', realBalance);
           setTonBalance(realBalance);
           
           // Update balance in database
           await updateTonBalanceInDB(realBalance);
+          
+          toast({
+            title: "تم تحديث الرصيد",
+            description: `رصيد TON: ${realBalance.toFixed(4)}`,
+          });
+        } else {
+          console.error('Invalid API response:', data);
+          throw new Error('Invalid response from TON API');
         }
+      } else {
+        console.error('API request failed:', response.status, response.statusText);
+        throw new Error(`API request failed: ${response.status}`);
       }
     } catch (error) {
       console.error('Error fetching real TON balance:', error);
@@ -152,20 +178,36 @@ export const WalletSection = () => {
   };
 
   const disconnectWallet = () => {
-    tonConnectUI.disconnect();
-    setShrougBalance(0);
-    setTonBalance(0);
-    setTransactions([]);
-    
-    toast({
-      title: "تم قطع الاتصال!",
-      description: "تم قطع الاتصال بمحفظة TON.",
-    });
+    try {
+      tonConnectUI.disconnect();
+      setShrougBalance(0);
+      setTonBalance(0);
+      setTransactions([]);
+      
+      toast({
+        title: "تم قطع الاتصال!",
+        description: "تم قطع الاتصال بمحفظة TON.",
+      });
+    } catch (error) {
+      console.error('Error disconnecting wallet:', error);
+      toast({
+        title: "خطأ في قطع الاتصال",
+        description: "حدث خطأ أثناء قطع الاتصال",
+        variant: "destructive"
+      });
+    }
   };
 
   // Send real TON transaction
   const sendRealTonTransaction = async (toAddress: string, amount: number) => {
-    if (!wallet?.account?.address) return;
+    if (!wallet?.account?.address) {
+      toast({
+        title: "لا توجد محفظة متصلة",
+        description: "يرجى ربط المحفظة أولاً",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setIsSendingTransaction(true);
     try {
@@ -184,6 +226,7 @@ export const WalletSection = () => {
 
       console.log('Sending transaction:', transaction);
       const result = await tonConnectUI.sendTransaction(transaction);
+      console.log('Transaction result:', result);
       
       // Save transaction to database
       const { error } = await supabase
@@ -242,8 +285,16 @@ export const WalletSection = () => {
           <p className="text-gray-600 mb-6">
             اربط محفظتك لإدارة رموز $SHROUK و $TON الخاصة بك
           </p>
-          <div className="flex justify-center">
+          <div className="flex justify-center mb-4">
             <TonConnectButton />
+          </div>
+          <div className="text-sm text-gray-500 space-y-2">
+            <p>المحافظ المدعومة:</p>
+            <div className="flex justify-center gap-2 flex-wrap">
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">TON Wallet</span>
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Tonkeeper</span>
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">TON Hub</span>
+            </div>
           </div>
         </Card>
       </div>

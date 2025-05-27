@@ -11,12 +11,38 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// TON Connect manifest URL - you can customize this
-const manifestUrl = 'https://raw.githubusercontent.com/ton-community/ton-connect-manifest/main/tonconnect-manifest.json';
+// TON Connect manifest - using a proper manifest for the project
+const manifestUrl = 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json';
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TonConnectUIProvider manifestUrl={manifestUrl}>
+    <TonConnectUIProvider 
+      manifestUrl={manifestUrl}
+      uiPreferences={{
+        theme: 'SYSTEM',
+        colorsSet: {
+          [THEME.DARK]: {
+            connectButton: {
+              background: '#7c3aed',
+              foreground: '#ffffff',
+            },
+            accent: '#7c3aed',
+            telegramButton: '#0088cc',
+          },
+          [THEME.LIGHT]: {
+            connectButton: {
+              background: '#7c3aed',
+              foreground: '#ffffff',
+            },
+            accent: '#7c3aed',
+            telegramButton: '#0088cc',
+          }
+        }
+      }}
+      actionsConfiguration={{
+        twaReturnUrl: 'https://t.me/shm8bot'
+      }}
+    >
       <LanguageProvider>
         <TooltipProvider>
           <Toaster />
