@@ -142,7 +142,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({
           </div>
           
           <div>
-            {task.completed ? <Badge className="bg-green-500 text-white">
+            {task.completed ? <Badge className="text-white bg-purple-800">
                 مكتملة
               </Badge> : <Button onClick={() => completeTask(task.id)} size="sm" className="princess-button">
                 استلام
