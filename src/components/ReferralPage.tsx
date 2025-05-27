@@ -4,20 +4,21 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Users, Share, Trophy, Bot, Gift, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
 export const ReferralPage = () => {
-  const { t } = useLanguage();
-  const { toast } = useToast();
+  const {
+    t
+  } = useLanguage();
+  const {
+    toast
+  } = useToast();
   const [referralStats] = useState({
     totalInvites: 12,
     totalEarned: 6.0,
     rank: 5
   });
-
   const openBot = () => {
     window.open('https://t.me/shm8bot', '_blank');
   };
-
   const referralLink = 'https://t.me/shm8bot?start=user123456';
   const copyReferralLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -37,42 +38,33 @@ export const ReferralPage = () => {
       copyReferralLink();
     }
   };
-
-  const leaderboard = [
-    {
-      rank: 1,
-      name: 'Princess Aria',
-      invites: 150,
-      earned: '75.0 SHROUK'
-    },
-    {
-      rank: 2,
-      name: 'Queen Luna',
-      invites: 128,
-      earned: '64.0 SHROUK'
-    },
-    {
-      rank: 3,
-      name: 'Fairy Rose',
-      invites: 95,
-      earned: '47.5 SHROUK'
-    },
-    {
-      rank: 4,
-      name: 'Star Maiden',
-      invites: 67,
-      earned: '33.5 SHROUK'
-    },
-    {
-      rank: 5,
-      name: 'You',
-      invites: referralStats.totalInvites,
-      earned: `${referralStats.totalEarned} SHROUK`
-    }
-  ];
-
-  return (
-    <div className="space-y-6">
+  const leaderboard = [{
+    rank: 1,
+    name: 'Princess Aria',
+    invites: 150,
+    earned: '75.0 SHROUK'
+  }, {
+    rank: 2,
+    name: 'Queen Luna',
+    invites: 128,
+    earned: '64.0 SHROUK'
+  }, {
+    rank: 3,
+    name: 'Fairy Rose',
+    invites: 95,
+    earned: '47.5 SHROUK'
+  }, {
+    rank: 4,
+    name: 'Star Maiden',
+    invites: 67,
+    earned: '33.5 SHROUK'
+  }, {
+    rank: 5,
+    name: 'You',
+    invites: referralStats.totalInvites,
+    earned: `${referralStats.totalEarned} SHROUK`
+  }];
+  return <div className="space-y-6">
       {/* Referral Stats */}
       <div className="grid grid-cols-3 gap-3">
         <Card className="glass-card p-3 text-center">
@@ -101,8 +93,8 @@ export const ReferralPage = () => {
           <h3 className="font-bold">كيفية الحصول على رابط الإحالة</h3>
         </div>
         
-        <div className="space-y-3 mb-4">
-          <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
+        <div className="space-y-3 mb-4 py-0 my-0">
+          <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg py-[3px]">
             <div className="w-6 h-6 bg-princess-pink text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
             <div>
               <p className="text-sm font-medium">ادخل إلى البوت</p>
@@ -114,7 +106,7 @@ export const ReferralPage = () => {
             <ArrowRight className="w-4 h-4 text-gray-400" />
           </div>
           
-          <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+          <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg py-[3px]">
             <div className="w-6 h-6 bg-princess-purple text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
             <div>
               <p className="text-sm font-medium">اكتب الأمر</p>
@@ -126,7 +118,7 @@ export const ReferralPage = () => {
             <ArrowRight className="w-4 h-4 text-gray-400" />
           </div>
           
-          <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+          <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg py-[3px]">
             <div className="w-6 h-6 bg-princess-gold text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
             <div>
               <p className="text-sm font-medium">احصل على رابط الإحالة</p>
@@ -135,7 +127,7 @@ export const ReferralPage = () => {
           </div>
         </div>
         
-        <Button onClick={openBot} className="princess-button w-full">
+        <Button onClick={openBot} className="princess-button w-full py-[15px] my-[14px]">
           <Bot className="w-4 h-4 mr-2" />
           فتح البوت @shm8bot
         </Button>
@@ -161,6 +153,5 @@ export const ReferralPage = () => {
 
       {/* Leaderboard */}
       
-    </div>
-  );
+    </div>;
 };
