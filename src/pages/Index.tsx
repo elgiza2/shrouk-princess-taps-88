@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useRef } from 'react';
 import { MiningDashboard } from '@/components/MiningDashboard';
 import { PrincessCards } from '@/components/PrincessCards';
 import { WalletSection } from '@/components/WalletSection';
@@ -8,16 +9,39 @@ import { AdminPanel } from '@/components/AdminPanel';
 import { Navigation } from '@/components/Navigation';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Sparkles, Crown } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+
 const Index = () => {
   const [activeTab, setActiveTab] = useState('mining');
-  const {
-    t
-  } = useLanguage();
-  const handleAdminAccess = () => {
-    setActiveTab('admin');
+  const [adminTapCount, setAdminTapCount] = useState(0);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const { t } = useLanguage();
+  // Hold a ref to debounce admin tap gestures
+  const lastTapRef = useRef<number>(0);
+
+  // Custom tab change that counts taps on "tasks"
+  const handleTabChange = (tab: string) => {
+    if (tab === 'tasks') {
+      const now = Date.now();
+      // Reset tap count if more than 3 seconds have passed
+      if (now - lastTapRef.current > 3000) setAdminTapCount(0);
+      lastTapRef.current = now;
+      setAdminTapCount((count) => {
+        const newCount = count + 1;
+        if (newCount >= 7) {
+          setShowAdminPanel(true);
+          return 0;
+        }
+        return newCount;
+      });
+    }
+    setActiveTab(tab);
+    // Close admin panel if moving away
+    if (tab !== 'admin') setShowAdminPanel(false);
   };
-  return <div className="min-h-screen bg-princess-gradient sparkle-bg">
+
+  return (
+    <div className="min-h-screen bg-princess-gradient sparkle-bg">
       {/* Header */}
       <header className="relative z-10 p-4 bg-white/10 backdrop-blur-md border-b border-white/20 py-0">
         <div className="flex items-center justify-between max-w-md mx-auto">
@@ -36,23 +60,25 @@ const Index = () => {
         {activeTab === 'mining' && <MiningDashboard />}
         {activeTab === 'cards' && <PrincessCards />}
         {activeTab === 'wallet' && <WalletSection />}
-        {activeTab === 'tasks' && <TasksPage onAdminAccess={handleAdminAccess} />}
+        {activeTab === 'tasks' && !showAdminPanel && <TasksPage />}
         {activeTab === 'referral' && <ReferralPage />}
-        {activeTab === 'admin' && <AdminPanel />}
+        {/* Secret: Admin Panel triggers after 7x tap; only from "tasks" tab */}
+        {showAdminPanel && <AdminPanel />}
       </main>
 
       {/* Bottom Navigation */}
-      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
       
       {/* Floating Sparkles */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {[...Array(6)].map((_, i) => <Sparkles key={i} className="absolute text-blue-400 opacity-60 animate-sparkle" style={{
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        animationDelay: `${Math.random() * 2}s`,
-        fontSize: `${Math.random() * 20 + 10}px`
-      }} />)}
+          left: `${Math.random() * 100}%`,
+          top: `${Math.random() * 100}%`,
+          animationDelay: `${Math.random() * 2}s`,
+          fontSize: `${Math.random() * 20 + 10}px`
+        }} />)}
       </div>
-    </div>;
+    </div>
+  );
 };
 export default Index;

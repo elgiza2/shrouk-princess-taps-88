@@ -9,6 +9,75 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      cards: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          hourly_yield: number | null
+          id: string
+          name: string
+          price: number | null
+          rarity: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          hourly_yield?: number | null
+          id?: string
+          name: string
+          price?: number | null
+          rarity?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          hourly_yield?: number | null
+          id?: string
+          name?: string
+          price?: number | null
+          rarity?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          category: string | null
+          completed: boolean | null
+          created_at: string | null
+          description: string | null
+          id: string
+          reward: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          reward?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          reward?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number

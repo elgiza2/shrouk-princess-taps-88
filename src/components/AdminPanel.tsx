@@ -7,13 +7,46 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, Edit, Trash2, Save } from 'lucide-react';
+import { Plus, Trash2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export const AdminPanel = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Load all cards from Supabase
+  const { data: cards, isLoading: loadingCards } = useQuery({
+    queryKey: ['cards'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cards')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Load all tasks from Supabase for display
+  const { data: tasks, isLoading: loadingTasks } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // States for new card and task forms
   const [isAddingCard, setIsAddingCard] = useState(false);
+  const [isAddingTask, setIsAddingTask] = useState(false);
+
   const [newCard, setNewCard] = useState({
     name: '',
     currency: 'shrouk',
@@ -23,6 +56,85 @@ export const AdminPanel = () => {
     rarity: 'common'
   });
 
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    reward: '',
+    category: 'daily'
+  });
+
+  // Add card mutation
+  const addCardMutation = useMutation({
+    mutationFn: async (card: typeof newCard) => {
+      const { data, error } = await supabase.from('cards').insert([
+        {
+          name: card.name,
+          currency: card.currency,
+          hourly_yield: card.hourlyYield,
+          price: card.price,
+          description: card.description,
+          rarity: card.rarity
+        }
+      ]);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: t('princessCardAdded'),
+        description: `${newCard.name} ${t('cardAddedToCollection')}`,
+      });
+      setIsAddingCard(false);
+      setNewCard({
+        name: '',
+        currency: 'shrouk',
+        hourlyYield: 0,
+        price: 0,
+        description: '',
+        rarity: 'common'
+      });
+      queryClient.invalidateQueries({ queryKey: ['cards'] });
+    },
+    onError: () => {
+      toast({ title: t('error'), description: t('errorOccurred'), variant: "destructive" });
+    }
+  });
+
+  // Add task mutation
+  const addTaskMutation = useMutation({
+    mutationFn: async (task: typeof newTask) => {
+      const { data, error } = await supabase.from('tasks').insert([
+        {
+          title: task.title,
+          description: task.description,
+          reward: task.reward,
+          category: task.category,
+          completed: false
+        }
+      ]);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: t('taskAdded'),
+        description: t('taskAddedSuccessfully'),
+      });
+      setIsAddingTask(false);
+      setNewTask({
+        title: '',
+        description: '',
+        reward: '',
+        category: 'daily'
+      });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: () => {
+      toast({ title: t('error'), description: t('errorOccurred'), variant: "destructive" });
+    }
+  });
+
+  // Add new card handler
   const handleAddCard = () => {
     if (!newCard.name || !newCard.hourlyYield || !newCard.price) {
       toast({
@@ -32,25 +144,23 @@ export const AdminPanel = () => {
       });
       return;
     }
-
-    console.log('Adding new card:', newCard);
-    
-    toast({
-      title: t('princessCardAdded'),
-      description: `${newCard.name} ${t('cardAddedToCollection')}`,
-    });
-    
-    setNewCard({
-      name: '',
-      currency: 'shrouk',
-      hourlyYield: 0,
-      price: 0,
-      description: '',
-      rarity: 'common'
-    });
-    setIsAddingCard(false);
+    addCardMutation.mutate(newCard);
   };
 
+  // Add new task handler
+  const handleAddTask = () => {
+    if (!newTask.title || !newTask.reward || !newTask.category) {
+      toast({
+        title: t('missingInformation'),
+        description: t('fillAllFields'),
+        variant: "destructive"
+      });
+      return;
+    }
+    addTaskMutation.mutate(newTask);
+  };
+
+  // UI
   return (
     <div className="space-y-6">
       {/* Admin Header */}
@@ -72,7 +182,6 @@ export const AdminPanel = () => {
             {t('addCard')}
           </Button>
         </div>
-
         {isAddingCard && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -85,7 +194,6 @@ export const AdminPanel = () => {
                   placeholder="Princess Name"
                 />
               </div>
-              
               <div>
                 <Label htmlFor="rarity">{t('rarity')}</Label>
                 <Select 
@@ -104,7 +212,6 @@ export const AdminPanel = () => {
                 </Select>
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="hourlyYield">{t('hourlyYield')}</Label>
@@ -113,11 +220,15 @@ export const AdminPanel = () => {
                   type="number"
                   step="0.001"
                   value={newCard.hourlyYield}
-                  onChange={(e) => setNewCard(prev => ({ ...prev, hourlyYield: parseFloat(e.target.value) || 0 }))}
+                  onChange={(e) =>
+                    setNewCard(prev => ({
+                      ...prev,
+                      hourlyYield: parseFloat(e.target.value) || 0
+                    }))
+                  }
                   placeholder="0.01"
                 />
               </div>
-              
               <div>
                 <Label htmlFor="price">{t('price')}</Label>
                 <Input
@@ -125,15 +236,19 @@ export const AdminPanel = () => {
                   type="number"
                   step="0.1"
                   value={newCard.price}
-                  onChange={(e) => setNewCard(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                  onChange={(e) =>
+                    setNewCard(prev => ({
+                      ...prev,
+                      price: parseFloat(e.target.value) || 0
+                    }))
+                  }
                   placeholder="1.0"
                 />
               </div>
             </div>
-
             <div>
               <Label htmlFor="currency">{t('currency')}</Label>
-              <Select 
+              <Select
                 value={newCard.currency}
                 onValueChange={(value) => setNewCard(prev => ({ ...prev, currency: value }))}
               >
@@ -146,7 +261,6 @@ export const AdminPanel = () => {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <Label htmlFor="description">{t('description')}</Label>
               <Textarea
@@ -157,15 +271,14 @@ export const AdminPanel = () => {
                 rows={3}
               />
             </div>
-
             <div className="flex gap-2">
-              <Button onClick={handleAddCard} className="princess-button flex-1">
+              <Button onClick={handleAddCard} className="princess-button flex-1" disabled={addCardMutation.isPending}>
                 <Save className="w-4 h-4 mr-1" />
                 {t('save')}
               </Button>
-              <Button 
+              <Button
                 onClick={() => setIsAddingCard(false)}
-                variant="outline" 
+                variant="outline"
                 className="flex-1"
               >
                 {t('cancel')}
@@ -175,34 +288,141 @@ export const AdminPanel = () => {
         )}
       </Card>
 
-      {/* Existing Cards Management */}
+      {/* Add New Task */}
+      <Card className="glass-card p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold">{t('addNewTask')}</h3>
+          <Button
+            onClick={() => setIsAddingTask(!isAddingTask)}
+            variant="outline"
+            size="sm"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            {t('addTask')}
+          </Button>
+        </div>
+        {isAddingTask && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="taskTitle">{t('taskTitle')}</Label>
+                <Input
+                  id="taskTitle"
+                  value={newTask.title}
+                  onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="e.g., Buy a card"
+                />
+              </div>
+              <div>
+                <Label htmlFor="taskCategory">{t('category')}</Label>
+                <Select
+                  value={newTask.category}
+                  onValueChange={(value) => setNewTask(prev => ({ ...prev, category: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">{t('daily')}</SelectItem>
+                    <SelectItem value="main">{t('main')}</SelectItem>
+                    <SelectItem value="partner">{t('partner')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="taskReward">{t('reward')}</Label>
+              <Input
+                id="taskReward"
+                value={newTask.reward}
+                onChange={(e) => setNewTask(prev => ({ ...prev, reward: e.target.value }))}
+                placeholder="+1.0 SHROUK"
+              />
+            </div>
+            <div>
+              <Label htmlFor="taskDescription">{t('description')}</Label>
+              <Textarea
+                id="taskDescription"
+                value={newTask.description}
+                onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="A new daily task for users"
+                rows={2}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleAddTask} className="princess-button flex-1" disabled={addTaskMutation.isPending}>
+                <Save className="w-4 h-4 mr-1" />
+                {t('save')}
+              </Button>
+              <Button
+                onClick={() => setIsAddingTask(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                {t('cancel')}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Cards Management */}
       <Card className="glass-card p-4">
         <h3 className="font-bold mb-4">{t('manageCards')}</h3>
         <div className="space-y-3">
-          {[
-            { name: 'Rose Princess', currency: 'SHROUK', yield: '0.01', price: '1.0' },
-            { name: 'Crystal Fairy', currency: 'TON', yield: '0.005', price: '0.1' },
-            { name: 'Golden Queen', currency: 'SHROUK', yield: '0.05', price: '10.0' },
-          ].map((card, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-white/10 rounded-lg">
-              <div>
-                <p className="font-medium">{card.name}</p>
-                <p className="text-sm text-gray-600">
-                  {card.yield} {card.currency}/h • {card.price} {card.currency}
-                </p>
+          {loadingCards ? (
+            <p className="text-center text-gray-400">{t('loading')}...</p>
+          ) : !cards || cards.length === 0 ? (
+            <p className="text-center text-muted-foreground">{t('noCards')}</p>
+          ) : (
+            cards.map((card, index) => (
+              <div key={card.id} className="flex items-center justify-between p-3 bg-white/10 rounded-lg">
+                <div>
+                  <p className="font-medium">{card.name}</p>
+                  <p className="text-sm text-gray-600">
+                    {card.hourly_yield} {card.currency}/h • {card.price} {card.currency}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  {/* Future: Edit card */}
+                  <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+            ))
+          )}
+        </div>
+      </Card>
+
+      {/* Tasks Management */}
+      <Card className="glass-card p-4">
+        <h3 className="font-bold mb-4">{t('manageTasks')}</h3>
+        <div className="space-y-3">
+          {loadingTasks ? (
+            <p className="text-center text-gray-400">{t('loading')}...</p>
+          ) : !tasks || tasks.length === 0 ? (
+            <p className="text-center text-muted-foreground">{t('noTasks')}</p>
+          ) : (
+            tasks.map((task, index) => (
+              <div key={task.id} className="flex items-center justify-between p-3 bg-white/10 rounded-lg">
+                <div>
+                  <p className="font-medium">{task.title}</p>
+                  <p className="text-xs text-gray-600 truncate max-w-xs">{task.description}</p>
+                  <p className="text-xs text-princess-purple">{t('category')}: {task.category}</p>
+                </div>
+                <div className="flex gap-2">
+                  {/* Future: Edit task */}
+                  <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </Card>
     </div>
   );
 };
+// ... file is getting long, consider refactoring after this!
