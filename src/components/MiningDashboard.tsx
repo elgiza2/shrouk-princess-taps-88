@@ -1,206 +1,422 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Zap, Coins, TrendingUp, Sparkles, ArrowUp, Star } from 'lucide-react';
+import { Zap, Coins, TrendingUp, Sparkles, ArrowUp, Star, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useUserAddress } from '@/hooks/useUserAddress';
+import { useTonWallet } from '@tonconnect/ui-react';
+import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export const MiningDashboard = () => {
   const { t } = useLanguage();
-  const address = useUserAddress();
+  const { toast } = useToast();
+  const wallet = useTonWallet();
+  const queryClient = useQueryClient();
 
-  // State for mining stats
-  const [tapsRemaining, setTapsRemaining] = useState(0);
-  const [maxTaps, setMaxTaps] = useState(1000);
-  const [shrougEarned, setShrougEarned] = useState(0);
-  const [tapValue, setTapValue] = useState(0.001);
   const [isTapping, setIsTapping] = useState(false);
-  const [tapUpgradeLevel, setTapUpgradeLevel] = useState(1);
   const [floatingCoins, setFloatingCoins] = useState<Array<{ id: number; x: number; y: number }>>([]);
-  const [loading, setLoading] = useState(true);
 
-  // Load the user's tap points from Supabase
-  useEffect(() => {
-    let mounted = true;
-    async function loadUserTapStats() {
-      if (!address) {
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
+  // Fetch user tap points
+  const { data: tapData, isLoading } = useQuery({
+    queryKey: ['user-tap-points', wallet?.account?.address],
+    queryFn: async () => {
+      if (!wallet?.account?.address) return null;
+      
       const { data, error } = await supabase
         .from('user_tap_points')
         .select('*')
-        .eq('user_address', address)
+        .eq('user_address', wallet.account.address)
         .maybeSingle();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!wallet?.account?.address,
+  });
 
-      if (error) {
-        // fallback to initial values, could handle error/toast
-        setLoading(false);
-        return;
+  // Fetch user balance
+  const { data: userBalance } = useQuery({
+    queryKey: ['user-balance', wallet?.account?.address],
+    queryFn: async () => {
+      if (!wallet?.account?.address) return null;
+      
+      const { data, error } = await supabase
+        .from('user_balances')
+        .select('*')
+        .eq('user_address', wallet.account.address)
+        .maybeSingle();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!wallet?.account?.address,
+  });
+
+  // Initialize user data mutation
+  const initializeUserMutation = useMutation({
+    mutationFn: async () => {
+      if (!wallet?.account?.address) throw new Error('No wallet connected');
+      
+      // Initialize tap points if not exists
+      if (!tapData) {
+        await supabase.from('user_tap_points').insert({
+          user_address: wallet.account.address,
+          tap_points: 0,
+          max_taps: 1000,
+          tap_value: 0.001,
+          tap_upgrade_level: 1,
+        });
       }
-      if (mounted) {
-        if (data) {
-          setShrougEarned(Number(data.tap_points) || 0);
-          setTapsRemaining(Number(data.max_taps) - Number(data.tap_points) % Number(data.max_taps));
-          setMaxTaps(Number(data.max_taps) || 1000);
-          setTapValue(Number(data.tap_value) || 0.001);
-          setTapUpgradeLevel(Number(data.tap_upgrade_level) || 1);
-        } else {
-          // Initialize new user row with defaults
-          (async () => {
-            await supabase.from('user_tap_points').insert({
-              user_address: address,
-              tap_points: 0,
-              max_taps: 1000,
-              tap_value: 0.001,
-              tap_upgrade_level: 1,
-            });
-            setShrougEarned(0);
-            setTapsRemaining(1000);
-            setMaxTaps(1000);
-            setTapValue(0.001);
-            setTapUpgradeLevel(1);
-          })();
-        }
-        setLoading(false);
+      
+      // Initialize balance if not exists
+      if (!userBalance) {
+        await supabase.from('user_balances').insert({
+          user_address: wallet.account.address,
+          shrouk_balance: 0,
+          ton_balance: 0
+        });
       }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-tap-points'] });
+      queryClient.invalidateQueries({ queryKey: ['user-balance'] });
+    },
+  });
+
+  // Initialize user data on wallet connection
+  useEffect(() => {
+    if (wallet?.account?.address && (!tapData || !userBalance)) {
+      initializeUserMutation.mutate();
     }
-    loadUserTapStats();
-    return () => {
-      mounted = false;
-    };
-  }, [address]);
+  }, [wallet?.account?.address, tapData, userBalance]);
 
-  // Helper to update the user's tap points and sync with wallet balance
-  async function updateTapStats(
-    changes: Partial<{
-      tap_points: number;
-      max_taps: number;
-      tap_value: number;
-      tap_upgrade_level: number;
-    }>
-  ) {
-    if (!address) return;
-    
-    // Update tap points
-    await supabase
-      .from('user_tap_points')
-      .update(changes)
-      .eq('user_address', address);
-
-    // If tap_points changed, update the SHROUK balance in user_balances
-    if (changes.tap_points !== undefined) {
-      await supabase
+  // Tap mutation
+  const tapMutation = useMutation({
+    mutationFn: async () => {
+      if (!wallet?.account?.address || !tapData) throw new Error('No data available');
+      
+      const currentTaps = tapData.tap_points || 0;
+      const maxTaps = tapData.max_taps || 1000;
+      const tapValue = tapData.tap_value || 0.001;
+      
+      // Check if can tap
+      const tapsUsed = currentTaps % maxTaps;
+      const tapsRemaining = maxTaps - tapsUsed;
+      
+      if (tapsRemaining <= 0) {
+        throw new Error('No taps remaining');
+      }
+      
+      const newTapPoints = currentTaps + tapValue;
+      
+      // Update tap points
+      const { error: tapError } = await supabase
+        .from('user_tap_points')
+        .update({ 
+          tap_points: newTapPoints,
+          last_tap_at: new Date().toISOString()
+        })
+        .eq('user_address', wallet.account.address);
+      
+      if (tapError) throw tapError;
+      
+      // Update balance
+      const { error: balanceError } = await supabase
         .from('user_balances')
         .upsert({
-          user_address: address,
-          shrouk_balance: changes.tap_points,
-          ton_balance: 0 // Keep existing TON balance, only update SHROUK
-        }, {
-          onConflict: 'user_address'
+          user_address: wallet.account.address,
+          shrouk_balance: newTapPoints,
+          ton_balance: userBalance?.ton_balance || 0
         });
-    }
-  }
+      
+      if (balanceError) throw balanceError;
+      
+      // Record transaction
+      await supabase.from('transactions').insert({
+        user_address: wallet.account.address,
+        transaction_type: 'mining',
+        amount: tapValue,
+        currency: 'SHROUK',
+        status: 'completed'
+      });
+      
+      return { newTapPoints, tapValue };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-tap-points'] });
+      queryClient.invalidateQueries({ queryKey: ['user-balance'] });
+    },
+    onError: (error: any) => {
+      if (error.message !== 'No taps remaining') {
+        toast({
+          title: t('tapError'),
+          description: t('tapErrorDescription'),
+          variant: "destructive"
+        });
+      }
+    },
+  });
 
-  // Tap logic and sync
+  // Refill taps mutation
+  const refillTapsMutation = useMutation({
+    mutationFn: async () => {
+      if (!wallet?.account?.address || !tapData || !userBalance) throw new Error('No data available');
+      
+      const cost = 2000;
+      const currentBalance = userBalance.shrouk_balance || 0;
+      
+      if (currentBalance < cost) {
+        throw new Error('Insufficient balance');
+      }
+      
+      // Update balance
+      const { error: balanceError } = await supabase
+        .from('user_balances')
+        .update({ shrouk_balance: currentBalance - cost })
+        .eq('user_address', wallet.account.address);
+      
+      if (balanceError) throw balanceError;
+      
+      // Reset tap points to allow full taps again
+      const { error: tapError } = await supabase
+        .from('user_tap_points')
+        .update({ tap_points: (userBalance.shrouk_balance - cost) })
+        .eq('user_address', wallet.account.address);
+      
+      if (tapError) throw tapError;
+      
+      // Record transaction
+      await supabase.from('transactions').insert({
+        user_address: wallet.account.address,
+        transaction_type: 'refill_taps',
+        amount: cost,
+        currency: 'SHROUK',
+        status: 'completed'
+      });
+      
+      return cost;
+    },
+    onSuccess: () => {
+      toast({
+        title: t('tapsRefilled'),
+        description: t('tapsRefilledSuccess'),
+      });
+      queryClient.invalidateQueries({ queryKey: ['user-tap-points'] });
+      queryClient.invalidateQueries({ queryKey: ['user-balance'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t('refillError'),
+        description: error.message === 'Insufficient balance' ? t('insufficientBalance') : t('refillErrorDescription'),
+        variant: "destructive"
+      });
+    },
+  });
+
+  // Upgrade tap capacity mutation
+  const upgradeTapCapacityMutation = useMutation({
+    mutationFn: async () => {
+      if (!wallet?.account?.address || !tapData || !userBalance) throw new Error('No data available');
+      
+      const cost = tapData.tap_upgrade_level * 5000;
+      const currentBalance = userBalance.shrouk_balance || 0;
+      
+      if (currentBalance < cost) {
+        throw new Error('Insufficient balance');
+      }
+      
+      // Update balance
+      const { error: balanceError } = await supabase
+        .from('user_balances')
+        .update({ shrouk_balance: currentBalance - cost })
+        .eq('user_address', wallet.account.address);
+      
+      if (balanceError) throw balanceError;
+      
+      // Upgrade tap capacity
+      const { error: tapError } = await supabase
+        .from('user_tap_points')
+        .update({ 
+          max_taps: tapData.max_taps + 1000,
+          tap_upgrade_level: tapData.tap_upgrade_level + 1,
+          tap_points: currentBalance - cost
+        })
+        .eq('user_address', wallet.account.address);
+      
+      if (tapError) throw tapError;
+      
+      // Record transaction
+      await supabase.from('transactions').insert({
+        user_address: wallet.account.address,
+        transaction_type: 'upgrade_capacity',
+        amount: cost,
+        currency: 'SHROUK',
+        status: 'completed'
+      });
+      
+      return cost;
+    },
+    onSuccess: () => {
+      toast({
+        title: t('capacityUpgraded'),
+        description: t('capacityUpgradedSuccess'),
+      });
+      queryClient.invalidateQueries({ queryKey: ['user-tap-points'] });
+      queryClient.invalidateQueries({ queryKey: ['user-balance'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t('upgradeError'),
+        description: error.message === 'Insufficient balance' ? t('insufficientBalance') : t('upgradeErrorDescription'),
+        variant: "destructive"
+      });
+    },
+  });
+
+  // Upgrade tap value mutation
+  const upgradeTapValueMutation = useMutation({
+    mutationFn: async () => {
+      if (!wallet?.account?.address || !tapData || !userBalance) throw new Error('No data available');
+      
+      const cost = tapData.tap_value * 10000;
+      const currentBalance = userBalance.shrouk_balance || 0;
+      
+      if (currentBalance < cost) {
+        throw new Error('Insufficient balance');
+      }
+      
+      // Update balance
+      const { error: balanceError } = await supabase
+        .from('user_balances')
+        .update({ shrouk_balance: currentBalance - cost })
+        .eq('user_address', wallet.account.address);
+      
+      if (balanceError) throw balanceError;
+      
+      // Upgrade tap value
+      const { error: tapError } = await supabase
+        .from('user_tap_points')
+        .update({ 
+          tap_value: tapData.tap_value * 1.5,
+          tap_points: currentBalance - cost
+        })
+        .eq('user_address', wallet.account.address);
+      
+      if (tapError) throw tapError;
+      
+      // Record transaction
+      await supabase.from('transactions').insert({
+        user_address: wallet.account.address,
+        transaction_type: 'upgrade_value',
+        amount: cost,
+        currency: 'SHROUK',
+        status: 'completed'
+      });
+      
+      return cost;
+    },
+    onSuccess: () => {
+      toast({
+        title: t('valueUpgraded'),
+        description: t('valueUpgradedSuccess'),
+      });
+      queryClient.invalidateQueries({ queryKey: ['user-tap-points'] });
+      queryClient.invalidateQueries({ queryKey: ['user-balance'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t('upgradeError'),
+        description: error.message === 'Insufficient balance' ? t('insufficientBalance') : t('upgradeErrorDescription'),
+        variant: "destructive"
+      });
+    },
+  });
+
   const handleTap = (event: React.MouseEvent | React.TouchEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    if (tapsRemaining <= 0 || loading) return;
+    
+    if (!tapData || tapMutation.isPending) return;
+    
+    const currentTaps = tapData.tap_points || 0;
+    const maxTaps = tapData.max_taps || 1000;
+    const tapsUsed = currentTaps % maxTaps;
+    const tapsRemaining = maxTaps - tapsUsed;
+    
+    if (tapsRemaining <= 0) return;
+    
     setIsTapping(true);
-    setTapsRemaining(prev => Math.max(0, prev - 1));
-    const newShrougBalance = shrougEarned + tapValue;
-    setShrougEarned(newShrougBalance);
+    tapMutation.mutate();
 
     // Coins animation FX
     const rect = (event.target as HTMLElement).getBoundingClientRect();
-    const x =
-      (event.type.includes('touch')
-        ? (event as React.TouchEvent).touches[0]?.clientX
-        : (event as React.MouseEvent).clientX) - rect.left;
-    const y =
-      (event.type.includes('touch')
-        ? (event as React.TouchEvent).touches[0]?.clientY
-        : (event as React.MouseEvent).clientY) - rect.top;
+    const x = (event.type.includes('touch')
+      ? (event as React.TouchEvent).touches[0]?.clientX
+      : (event as React.MouseEvent).clientX) - rect.left;
+    const y = (event.type.includes('touch')
+      ? (event as React.TouchEvent).touches[0]?.clientY
+      : (event as React.MouseEvent).clientY) - rect.top;
     const coinId = Date.now() + Math.random();
-    setFloatingCoins(prev => [
-      ...prev,
-      { id: coinId, x, y }
-    ]);
+    
+    setFloatingCoins(prev => [...prev, { id: coinId, x, y }]);
+    
     setTimeout(() => {
       setFloatingCoins(prev => prev.filter(coin => coin.id !== coinId));
     }, 1000);
+    
     setTimeout(() => setIsTapping(false), 100);
-
-    // Sync to Supabase after tap - update both tap points and wallet balance
-    updateTapStats({ tap_points: newShrougBalance });
   };
 
-  const refillTaps = async () => {
-    if (shrougEarned < 2000) return;
-    const newBalance = shrougEarned - 2000;
-    setShrougEarned(newBalance);
-    setTapsRemaining(maxTaps);
-    // Sync points and balance
-    await updateTapStats({ tap_points: newBalance });
-  };
-
-  const upgradeTapCapacity = async () => {
-    const upgradeCost = tapUpgradeLevel * 5000;
-    if (shrougEarned < upgradeCost) return;
-    const newBalance = shrougEarned - upgradeCost;
-    setShrougEarned(newBalance);
-    setMaxTaps(prev => prev + 1000);
-    setTapsRemaining(prev => prev + 1000);
-    setTapUpgradeLevel(prev => prev + 1);
-
-    await updateTapStats({
-      tap_points: newBalance,
-      max_taps: maxTaps + 1000,
-      tap_upgrade_level: tapUpgradeLevel + 1,
-    });
-  };
-
-  const upgradeTapValue = async () => {
-    const upgradeCost = tapValue * 10000;
-    if (shrougEarned < upgradeCost) return;
-    const newBalance = shrougEarned - upgradeCost;
-    setShrougEarned(newBalance);
-    setTapValue(prev => prev * 1.5);
-
-    await updateTapStats({
-      tap_points: newBalance,
-      tap_value: tapValue * 1.5,
-    });
-  };
-
-  // Loading UI
-  if (loading) {
+  // Loading state
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
-        <span className="text-gray-500 animate-pulse">{t('loading')}...</span>
+        <Loader2 className="w-8 h-8 animate-spin text-princess-purple" />
       </div>
     );
   }
 
+  if (!wallet?.account?.address) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-gray-600">{t('connectWalletToMine')}</p>
+      </div>
+    );
+  }
+
+  if (!tapData || !userBalance) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-gray-600">{t('initializingAccount')}</p>
+      </div>
+    );
+  }
+
+  const currentTaps = tapData.tap_points || 0;
+  const maxTaps = tapData.max_taps || 1000;
+  const tapValue = tapData.tap_value || 0.001;
+  const tapsUsed = currentTaps % maxTaps;
+  const tapsRemaining = maxTaps - tapsUsed;
+  const shrougBalance = userBalance.shrouk_balance || 0;
+
   return (
     <div className="space-y-6">
       {/* Mining Stats - SHROUK Only */}
-      <div className="grid grid-cols-1 gap-4 px-4 py-0 my-[10px]">
+      <div className="grid grid-cols-1 gap-4">
         <Card className="glass-card relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
           <div className="absolute top-1 right-1">
             <Star className="w-3 h-3 text-yellow-400 animate-pulse" />
           </div>
-          <div className="relative p-3 text-center py-0 px-0">
-            <div className="bg-white/30 backdrop-blur-sm p-3 shadow-inner mx-[97px] px-px my-px py-0 rounded-none">
+          <div className="relative p-3 text-center">
+            <div className="bg-white/30 backdrop-blur-sm p-3 shadow-inner rounded-lg">
               <p className="text-2xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                {shrougEarned.toLocaleString()}
+                {shrougBalance.toLocaleString()}
               </p>
-              <p className="text-xs text-gray-500">Total Balance</p>
+              <p className="text-xs text-gray-500">Total SHROUK Balance</p>
             </div>
           </div>
         </Card>
@@ -211,7 +427,9 @@ export const MiningDashboard = () => {
         <div className="mb-4">
           <div className="w-40 h-40 mx-auto mb-4 relative">
             <div
-              className={`w-full h-full cursor-pointer transition-all duration-100 relative ${isTapping ? 'scale-95' : 'hover:scale-105'} ${tapsRemaining <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full h-full cursor-pointer transition-all duration-100 relative ${
+                isTapping ? 'scale-95' : 'hover:scale-105'
+              } ${tapsRemaining <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
               onMouseDown={handleTap}
               onTouchStart={handleTap}
               style={{
@@ -221,20 +439,31 @@ export const MiningDashboard = () => {
                 touchAction: 'manipulation'
               }}
             >
-              <img src="/lovable-uploads/b9511081-08ef-4089-85f5-8978bd7b19b9.png" alt="Butterfly Mining" className="w-full h-full object-contain drop-shadow-2xl animate-pulse-glow" draggable={false} />
+              <img 
+                src="/lovable-uploads/b9511081-08ef-4089-85f5-8978bd7b19b9.png" 
+                alt="Butterfly Mining" 
+                className="w-full h-full object-contain drop-shadow-2xl animate-pulse-glow" 
+                draggable={false} 
+              />
               <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-xl animate-pulse"></div>
             </div>
-            {/* العملات المتطايرة */}
+            
+            {/* Floating coins */}
             {floatingCoins.map(coin => (
-              <div key={coin.id} className="absolute pointer-events-none animate-float-up" style={{
-                left: coin.x,
-                top: coin.y,
-                transform: 'translate(-50%, -50%)'
-              }}>
+              <div 
+                key={coin.id} 
+                className="absolute pointer-events-none animate-float-up" 
+                style={{
+                  left: coin.x,
+                  top: coin.y,
+                  transform: 'translate(-50%, -50%)'
+                }}
+              >
                 <div className="text-blue-500 font-bold text-lg">+{tapValue.toFixed(4)}</div>
               </div>
             ))}
-            {/* شرارات التأثير */}
+            
+            {/* Impact sparkles */}
             {isTapping && (
               <div className="absolute inset-0 pointer-events-none">
                 <Sparkles className="absolute top-2 right-2 text-blue-400 animate-sparkle" />
@@ -256,23 +485,55 @@ export const MiningDashboard = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <Button onClick={refillTaps} variant="outline" size="sm" className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all duration-200" disabled={shrougEarned < 2000}>
-              Refill (2K SHROUK)
+            <Button 
+              onClick={() => refillTapsMutation.mutate()}
+              variant="outline" 
+              size="sm" 
+              className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all duration-200" 
+              disabled={refillTapsMutation.isPending || shrougBalance < 2000}
+            >
+              {refillTapsMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Refill (2K SHROUK)"
+              )}
             </Button>
-            <Button onClick={upgradeTapCapacity} variant="outline" size="sm" className="border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white transition-all duration-200" disabled={shrougEarned < tapUpgradeLevel * 5000}>
-              <ArrowUp className="w-4 h-4 mr-1" />
-              +1K Taps
+            <Button 
+              onClick={() => upgradeTapCapacityMutation.mutate()}
+              variant="outline" 
+              size="sm" 
+              className="border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white transition-all duration-200" 
+              disabled={upgradeTapCapacityMutation.isPending || shrougBalance < (tapData.tap_upgrade_level * 5000)}
+            >
+              {upgradeTapCapacityMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <ArrowUp className="w-4 h-4 mr-1" />
+                  +1K Taps
+                </>
+              )}
             </Button>
           </div>
 
-          <Button onClick={upgradeTapValue} variant="outline" size="sm" className="w-full border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-200" disabled={shrougEarned < tapValue * 10000}>
-            Upgrade Tap Value (+50%)
+          <Button 
+            onClick={() => upgradeTapValueMutation.mutate()}
+            variant="outline" 
+            size="sm" 
+            className="w-full border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-200" 
+            disabled={upgradeTapValueMutation.isPending || shrougBalance < (tapValue * 10000)}
+          >
+            {upgradeTapValueMutation.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              "Upgrade Tap Value (+50%)"
+            )}
           </Button>
         </div>
       </Card>
 
       {/* Hourly Earnings Preview */}
-      <Card className="glass-card p-4 rounded-full py-[7px]">
+      <Card className="glass-card p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-500" />

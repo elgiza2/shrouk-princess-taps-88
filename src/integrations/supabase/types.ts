@@ -147,6 +147,41 @@ export type Database = {
         }
         Relationships: []
       }
+      user_cards: {
+        Row: {
+          card_id: string
+          id: string
+          last_yield_claim: string | null
+          level: number
+          owned_at: string
+          user_address: string
+        }
+        Insert: {
+          card_id: string
+          id?: string
+          last_yield_claim?: string | null
+          level?: number
+          owned_at?: string
+          user_address: string
+        }
+        Update: {
+          card_id?: string
+          id?: string
+          last_yield_claim?: string | null
+          level?: number
+          owned_at?: string
+          user_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_cards_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_tap_points: {
         Row: {
           created_at: string | null
@@ -180,12 +215,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_task_completions: {
+        Row: {
+          completed_at: string
+          id: string
+          reward_claimed: boolean
+          task_id: string
+          user_address: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          reward_claimed?: boolean
+          task_id: string
+          user_address: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          reward_claimed?: boolean
+          task_id?: string
+          user_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_task_completions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_hourly_earnings: {
+        Args: { user_addr: string }
+        Returns: number
+      }
+      process_card_yields: {
+        Args: { user_addr: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
