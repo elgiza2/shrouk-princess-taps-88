@@ -11,8 +11,8 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// استخدام رابط مانيفست بسيط ومحدث
-const manifestUrl = 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json';
+// Use the correct manifest URL for this app
+const manifestUrl = window.location.origin + '/tonconnect-manifest.json';
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
