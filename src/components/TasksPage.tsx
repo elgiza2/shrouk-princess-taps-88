@@ -9,6 +9,7 @@ import { CheckCircle, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useTonWallet } from '@tonconnect/ui-react';
 
 interface Task {
   id: string;
@@ -27,6 +28,7 @@ interface TasksPageProps {
 export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const wallet = useTonWallet();
 
   // Fetch tasks from Supabase
   const { data: tasks, isLoading, error, refetch } = useQuery({
@@ -41,16 +43,103 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
     },
   });
 
+  // Update SHROUK balance when task is completed
+  const updateShrougBalance = async (rewardAmount: number) => {
+    if (!wallet?.account?.address) return;
+
+    try {
+      // Get current balance
+      const { data: currentBalance, error: balanceError } = await supabase
+        .from('user_balances')
+        .select('shrouk_balance')
+        .eq('user_address', wallet.account.address)
+        .maybeSingle();
+
+      if (balanceError && balanceError.code !== 'PGRST116') {
+        console.error('Error fetching current balance:', balanceError);
+        return;
+      }
+
+      const currentShroug = currentBalance?.shrouk_balance || 0;
+      const newBalance = Number(currentShroug) + rewardAmount;
+
+      // Update balance
+      const { error: updateError } = await supabase
+        .from('user_balances')
+        .upsert({
+          user_address: wallet.account.address,
+          shrouk_balance: newBalance,
+          ton_balance: 0
+        });
+
+      if (updateError) {
+        console.error('Error updating balance:', updateError);
+        return;
+      }
+
+      // Also update tap points table
+      const { error: tapError } = await supabase
+        .from('user_tap_points')
+        .upsert({
+          user_address: wallet.account.address,
+          tap_points: newBalance,
+          max_taps: 1000,
+          tap_upgrade_level: 1,
+          tap_value: 0.001
+        });
+
+      if (tapError) {
+        console.error('Error updating tap points:', tapError);
+      }
+
+      console.log('Balance updated successfully:', newBalance);
+    } catch (error) {
+      console.error('Error in updateShrougBalance:', error);
+    }
+  };
+
   // Task completion handler
-  const completeTask = (task: Task) => {
+  const completeTask = async (task: Task) => {
+    if (!wallet?.account?.address) {
+      toast({
+        title: t('noWalletConnected'),
+        description: t('connectWalletFirst'),
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (task.link) {
       // Open the task link in a new tab
       window.open(task.link, '_blank', 'noopener,noreferrer');
     }
     
+    // Extract reward amount from string (e.g., "100 SHROUK" -> 100)
+    const rewardAmount = task.reward ? parseFloat(task.reward.replace(/[^\d.]/g, '')) || 0 : 0;
+    
+    if (rewardAmount > 0) {
+      await updateShrougBalance(rewardAmount);
+    }
+
+    // Mark task as completed
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ completed: true })
+        .eq('id', task.id);
+
+      if (error) {
+        console.error('Error marking task as completed:', error);
+      } else {
+        refetch(); // Refresh tasks list
+      }
+    } catch (error) {
+      console.error('Error updating task status:', error);
+    }
+    
     toast({
-      title: 'تم فتح رابط المهمة',
-      description: `أكمل المهمة واحصل على ${task.reward ?? ''}`,
+      title: t('taskCompleted'),
+      description: `${t('rewardReceived')} ${task.reward || ''}`,
     });
   };
 
@@ -86,19 +175,19 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
               {task.description}
             </p>
             <p className="text-sm font-medium text-princess-purple mt-1 text-right">
-              المكافأة: {task.reward || ''}
+              {t('reward')}: {task.reward || ''}
             </p>
             {task.link && (
               <div className="flex items-center justify-end gap-1 mt-2">
                 <ExternalLink className="w-4 h-4 text-blue-500" />
-                <span className="text-xs text-blue-500">انقر للانتقال للمهمة</span>
+                <span className="text-xs text-blue-500">{t('clickToStartTask')}</span>
               </div>
             )}
           </div>
           <div>
             {task.completed ? (
               <Badge className="text-white bg-green-600">
-                مكتملة
+                {t('completed')}
               </Badge>
             ) : (
               <Button 
@@ -110,10 +199,10 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
                 {task.link ? (
                   <>
                     <ExternalLink className="w-4 h-4" />
-                    ابدأ المهمة
+                    {t('startTask')}
                   </>
                 ) : (
-                  'قريباً'
+                  t('comingSoon')
                 )}
               </Button>
             )}
@@ -156,28 +245,28 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
       {/* Header */}
       <Card className="glass-card p-4">
         <h2 className="font-bold text-lg text-center">
-          مركز المهام
+          {t('taskCenter')}
         </h2>
         <p className="text-sm text-center text-gray-600 mt-2">
-          أكمل المهام واحصل على المكافآت
+          {t('completeTasksAndEarnRewards')}
         </p>
       </Card>
 
       {/* Tabs */}
       <Tabs defaultValue="daily" className="w-full" dir="rtl">
         <TabsList className="grid w-full grid-cols-3 mb-6">
-          <TabsTrigger value="daily">المهام اليومية</TabsTrigger>
-          <TabsTrigger value="main">المهام الرئيسية</TabsTrigger>
-          <TabsTrigger value="partner">مهام الشراكة</TabsTrigger>
+          <TabsTrigger value="daily">{t('dailyTasks')}</TabsTrigger>
+          <TabsTrigger value="main">{t('mainTasks')}</TabsTrigger>
+          <TabsTrigger value="partner">{t('partnerTasks')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="daily" className="space-y-4">
           <CategoryProgress category="daily" />
           <div className="space-y-4">
             {isLoading ? (
-              <p className="text-sm text-center text-muted-foreground">جاري التحميل...</p>
+              <p className="text-sm text-center text-muted-foreground">{t('loading')}...</p>
             ) : getTasksByCategory('daily').length === 0 ? (
-              <p className="text-sm text-center text-muted-foreground">لا توجد مهام يومية</p>
+              <p className="text-sm text-center text-muted-foreground">{t('noDailyTasks')}</p>
             ) : (
               getTasksByCategory('daily').map(task => (
                 <TaskCard key={task.id} task={task} />
@@ -190,9 +279,9 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
           <CategoryProgress category="main" />
           <div className="space-y-4">
             {isLoading ? (
-              <p className="text-sm text-center text-muted-foreground">جاري التحميل...</p>
+              <p className="text-sm text-center text-muted-foreground">{t('loading')}...</p>
             ) : getTasksByCategory('main').length === 0 ? (
-              <p className="text-sm text-center text-muted-foreground">لا توجد مهام رئيسية</p>
+              <p className="text-sm text-center text-muted-foreground">{t('noMainTasks')}</p>
             ) : (
               getTasksByCategory('main').map(task => (
                 <TaskCard key={task.id} task={task} />
@@ -205,9 +294,9 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onAdminAccess }) => {
           <CategoryProgress category="partner" />
           <div className="space-y-4">
             {isLoading ? (
-              <p className="text-sm text-center text-muted-foreground">جاري التحميل...</p>
+              <p className="text-sm text-center text-muted-foreground">{t('loading')}...</p>
             ) : getTasksByCategory('partner').length === 0 ? (
-              <p className="text-sm text-center text-muted-foreground">لا توجد مهام شراكة</p>
+              <p className="text-sm text-center text-muted-foreground">{t('noPartnerTasks')}</p>
             ) : (
               getTasksByCategory('partner').map(task => (
                 <TaskCard key={task.id} task={task} />

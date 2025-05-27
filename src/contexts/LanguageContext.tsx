@@ -118,7 +118,15 @@ const translations: { [key: string]: { [key: string]: string } } = {
     noWalletConnected: 'No wallet connected',
     connectWalletFirst: 'Please connect wallet first',
     loading: 'Loading',
-    noTasks: 'No tasks found'
+    noTasks: 'No tasks found',
+    reward: 'Reward',
+    clickToStartTask: 'Click to start the task',
+    startTask: 'Start Task',
+    comingSoon: 'Coming Soon',
+    completeTasksAndEarnRewards: 'Complete tasks and earn rewards',
+    noDailyTasks: 'No daily tasks available',
+    noMainTasks: 'No main tasks available',
+    noPartnerTasks: 'No partner tasks available'
   },
   ar: {
     mining: 'التعدين',
@@ -155,7 +163,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
     taskCenter: 'مركز المهام',
     dailyTasks: 'المهام اليومية',
     mainTasks: 'المهام الرئيسية',
-    partnerTasks: 'مهام الشركاء',
+    partnerTasks: 'مهام الشراكة',
     completed: 'مكتملة',
     claim: 'استلام',
     buyPrincessCard: 'شراء بطاقة أميرة',
@@ -167,7 +175,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
     writeCommand: 'اكتب الأمر',
     getReferralLink: 'احصل على رابط الإحالة',
     openBot: 'فتح البوت',
-    airdropReward: 'كافأة الإيردروب',
+    airdropReward: 'مكافأة الإيردروب',
     bonusReward: 'كافأة إضافية',
     rarity: 'الندرة',
     addNewCard: 'إضافة بطاقة جديدة',
@@ -177,7 +185,7 @@ const translations: { [key: string]: { [key: string]: string } } = {
     atAirdropTime: 'وقت الإيردروب!',
     moreInvitesMoreRewards: 'كلما دعوت أصدقاء أكثر، كلما زادت مكافآتك',
     taskCompleted: 'تم إكمال المهمة!',
-    rewardReceived: 'المكافأة المحصلة:',
+    rewardReceived: 'تم استلام المكافأة:',
     adminAccessGranted: 'تم منح صلاحية الأدمن!',
     welcomeToAdminPanel: 'مرحباً بك في لوحة الأدمن',
     adminPanel: 'لوحة الأدمن',
@@ -229,7 +237,15 @@ const translations: { [key: string]: { [key: string]: string } } = {
     noWalletConnected: 'لا توجد محفظة متصلة',
     connectWalletFirst: 'يرجى ربط المحفظة أولاً',
     loading: 'جاري التحميل',
-    noTasks: 'لا توجد مهام'
+    noTasks: 'لا توجد مهام',
+    reward: 'المكافأة',
+    clickToStartTask: 'انقر لبدء المهمة',
+    startTask: 'ابدأ المهمة',
+    comingSoon: 'قريباً',
+    completeTasksAndEarnRewards: 'أكمل المهام واحصل على المكافآت',
+    noDailyTasks: 'لا توجد مهام يومية متاحة',
+    noMainTasks: 'لا توجد مهام رئيسية متاحة',
+    noPartnerTasks: 'لا توجد مهام شراكة متاحة'
   },
   ru: {
     mining: 'Майнинг',
@@ -340,7 +356,15 @@ const translations: { [key: string]: { [key: string]: string } } = {
     noWalletConnected: 'Кошелек не подключен',
     connectWalletFirst: 'Сначала подключите кошелек',
     loading: 'Загрузка',
-    noTasks: 'Заданий нет'
+    noTasks: 'Заданий нет',
+    reward: 'Награда',
+    clickToStartTask: 'Нажмите, чтобы начать задание',
+    startTask: 'Начать задание',
+    comingSoon: 'Скоро',
+    completeTasksAndEarnRewards: 'Выполняйте задания и зарабатывайте награды',
+    noDailyTasks: 'Нет ежедневных заданий',
+    noMainTasks: 'Нет основных заданий',
+    noPartnerTasks: 'Нет партнерских заданий'
   }
 };
 
