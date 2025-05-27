@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTonWallet } from '@tonconnect/ui-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
 interface PrincessCard {
   id: string;
   name: string;
@@ -21,141 +20,154 @@ interface PrincessCard {
   level?: number;
   image: string;
 }
-
 export const PrincessCards = () => {
-  const { t } = useLanguage();
-  const { toast } = useToast();
+  const {
+    t
+  } = useLanguage();
+  const {
+    toast
+  } = useToast();
   const wallet = useTonWallet();
   const queryClient = useQueryClient();
 
   // Fetch cards from database
-  const { data: cards = [], isLoading } = useQuery({
+  const {
+    data: cards = [],
+    isLoading
+  } = useQuery({
     queryKey: ['cards'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('cards')
-        .select('*')
-        .order('price', { ascending: true });
-      
+      const {
+        data,
+        error
+      } = await supabase.from('cards').select('*').order('price', {
+        ascending: true
+      });
       if (error) throw error;
-      
+
       // Add image URLs and update currency for Shrouk card
       const cardsWithImages = data.map(card => ({
         ...card,
         image: getCardImage(card.name),
         currency: card.name === 'Shrouk' ? 'TON' : 'SHROUK'
       }));
-      
       return cardsWithImages;
-    },
+    }
   });
 
   // Fetch user's owned cards
-  const { data: userCards = [] } = useQuery({
+  const {
+    data: userCards = []
+  } = useQuery({
     queryKey: ['user-cards', wallet?.account?.address],
     queryFn: async () => {
       if (!wallet?.account?.address) return [];
-      
-      const { data, error } = await supabase
-        .from('user_cards')
-        .select('*, cards(*)')
-        .eq('user_address', wallet.account.address);
-      
+      const {
+        data,
+        error
+      } = await supabase.from('user_cards').select('*, cards(*)').eq('user_address', wallet.account.address);
       if (error) throw error;
       return data || [];
     },
-    enabled: !!wallet?.account?.address,
+    enabled: !!wallet?.account?.address
   });
 
   // Fetch user balance
-  const { data: userBalance } = useQuery({
+  const {
+    data: userBalance
+  } = useQuery({
     queryKey: ['user-balance', wallet?.account?.address],
     queryFn: async () => {
       if (!wallet?.account?.address) return null;
-      
-      const { data, error } = await supabase
-        .from('user_balances')
-        .select('*')
-        .eq('user_address', wallet.account.address)
-        .maybeSingle();
-      
+      const {
+        data,
+        error
+      } = await supabase.from('user_balances').select('*').eq('user_address', wallet.account.address).maybeSingle();
       if (error) throw error;
       return data;
     },
-    enabled: !!wallet?.account?.address,
+    enabled: !!wallet?.account?.address
   });
 
   // Process card yields mutation
   const processYieldsMutation = useMutation({
     mutationFn: async () => {
       if (!wallet?.account?.address) throw new Error('No wallet connected');
-      
-      const { data, error } = await supabase.rpc('process_card_yields', {
+      const {
+        data,
+        error
+      } = await supabase.rpc('process_card_yields', {
         user_addr: wallet.account.address
       });
-      
       if (error) throw error;
       return data;
     },
-    onSuccess: (yield_amount) => {
+    onSuccess: yield_amount => {
       if (yield_amount > 0) {
         toast({
           title: t('yieldsCollected'),
-          description: `+${yield_amount.toFixed(2)} SHROUK`,
+          description: `+${yield_amount.toFixed(2)} SHROUK`
         });
       }
-      queryClient.invalidateQueries({ queryKey: ['user-balance'] });
-    },
+      queryClient.invalidateQueries({
+        queryKey: ['user-balance']
+      });
+    }
   });
 
   // Buy card mutation
   const buyCardMutation = useMutation({
-    mutationFn: async ({ cardId, price, currency }: { cardId: string; price: number; currency: string }) => {
+    mutationFn: async ({
+      cardId,
+      price,
+      currency
+    }: {
+      cardId: string;
+      price: number;
+      currency: string;
+    }) => {
       if (!wallet?.account?.address) throw new Error('No wallet connected');
-      
+
       // Check if user has enough balance with proper fallback values
-      const currentBalance = currency === 'SHROUK' 
-        ? (userBalance?.shrouk_balance || 0)
-        : (userBalance?.ton_balance || 0);
-        
-      console.log('Purchase attempt:', { cardId, price, currency, currentBalance, userBalance });
-      
+      const currentBalance = currency === 'SHROUK' ? userBalance?.shrouk_balance || 0 : userBalance?.ton_balance || 0;
+      console.log('Purchase attempt:', {
+        cardId,
+        price,
+        currency,
+        currentBalance,
+        userBalance
+      });
       if (currentBalance < price) {
         throw new Error('Insufficient balance');
       }
-      
+
       // Buy the card
-      const { error: insertError } = await supabase
-        .from('user_cards')
-        .insert({
-          user_address: wallet.account.address,
-          card_id: cardId,
-          level: 1
-        });
-      
+      const {
+        error: insertError
+      } = await supabase.from('user_cards').insert({
+        user_address: wallet.account.address,
+        card_id: cardId,
+        level: 1
+      });
       if (insertError) throw insertError;
-      
+
       // Deduct balance
       const newBalance = currentBalance - price;
-      const balanceUpdate = currency === 'SHROUK' 
-        ? { 
-            shrouk_balance: newBalance,
-            ton_balance: userBalance?.ton_balance || 0
-          }
-        : { 
-            ton_balance: newBalance,
-            shrouk_balance: userBalance?.shrouk_balance || 0
-          };
-      
-      const { error: balanceError } = await supabase
-        .from('user_balances')
-        .upsert({
-          user_address: wallet.account.address,
-          ...balanceUpdate
-        });
-      
+      const balanceUpdate = currency === 'SHROUK' ? {
+        shrouk_balance: newBalance,
+        ton_balance: userBalance?.ton_balance || 0
+      } : {
+        ton_balance: newBalance,
+        shrouk_balance: userBalance?.shrouk_balance || 0
+      };
+      const {
+        error: balanceError
+      } = await supabase.from('user_balances').upsert({
+        user_address: wallet.account.address,
+        ...balanceUpdate
+      });
       if (balanceError) throw balanceError;
-      
+
       // Record transaction
       await supabase.from('transactions').insert({
         user_address: wallet.account.address,
@@ -164,16 +176,26 @@ export const PrincessCards = () => {
         currency: currency,
         status: 'completed'
       });
-      
-      return { cardId, price, currency };
+      return {
+        cardId,
+        price,
+        currency
+      };
     },
-    onSuccess: ({ price, currency }) => {
+    onSuccess: ({
+      price,
+      currency
+    }) => {
       toast({
         title: t('cardPurchased'),
-        description: `${t('cardBoughtFor')} ${price} ${currency}`,
+        description: `${t('cardBoughtFor')} ${price} ${currency}`
       });
-      queryClient.invalidateQueries({ queryKey: ['user-cards'] });
-      queryClient.invalidateQueries({ queryKey: ['user-balance'] });
+      queryClient.invalidateQueries({
+        queryKey: ['user-cards']
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['user-balance']
+      });
     },
     onError: (error: any) => {
       console.error('Purchase error:', error);
@@ -182,51 +204,53 @@ export const PrincessCards = () => {
         description: error.message === 'Insufficient balance' ? t('insufficientBalance') : t('purchaseError'),
         variant: "destructive"
       });
-    },
+    }
   });
 
   // Upgrade card mutation
   const upgradeCardMutation = useMutation({
-    mutationFn: async ({ cardId, upgradeCost }: { cardId: string; upgradeCost: number }) => {
+    mutationFn: async ({
+      cardId,
+      upgradeCost
+    }: {
+      cardId: string;
+      upgradeCost: number;
+    }) => {
       if (!wallet?.account?.address) throw new Error('No wallet connected');
-      
       const currentBalance = userBalance?.shrouk_balance || 0;
-      console.log('Upgrade attempt:', { cardId, upgradeCost, currentBalance });
-      
+      console.log('Upgrade attempt:', {
+        cardId,
+        upgradeCost,
+        currentBalance
+      });
       if (currentBalance < upgradeCost) {
         throw new Error('Insufficient balance');
       }
-      
+
       // Get current card level first
-      const { data: currentCard, error: fetchError } = await supabase
-        .from('user_cards')
-        .select('level')
-        .eq('user_address', wallet.account.address)
-        .eq('card_id', cardId)
-        .single();
-      
+      const {
+        data: currentCard,
+        error: fetchError
+      } = await supabase.from('user_cards').select('level').eq('user_address', wallet.account.address).eq('card_id', cardId).single();
       if (fetchError) throw fetchError;
-      
+
       // Upgrade the card
-      const { error: upgradeError } = await supabase
-        .from('user_cards')
-        .update({ level: currentCard.level + 1 })
-        .eq('user_address', wallet.account.address)
-        .eq('card_id', cardId);
-      
+      const {
+        error: upgradeError
+      } = await supabase.from('user_cards').update({
+        level: currentCard.level + 1
+      }).eq('user_address', wallet.account.address).eq('card_id', cardId);
       if (upgradeError) throw upgradeError;
-      
+
       // Deduct balance
-      const { error: balanceError } = await supabase
-        .from('user_balances')
-        .update({ 
-          shrouk_balance: currentBalance - upgradeCost,
-          ton_balance: userBalance?.ton_balance || 0
-        })
-        .eq('user_address', wallet.account.address);
-      
+      const {
+        error: balanceError
+      } = await supabase.from('user_balances').update({
+        shrouk_balance: currentBalance - upgradeCost,
+        ton_balance: userBalance?.ton_balance || 0
+      }).eq('user_address', wallet.account.address);
       if (balanceError) throw balanceError;
-      
+
       // Record transaction
       await supabase.from('transactions').insert({
         user_address: wallet.account.address,
@@ -235,16 +259,24 @@ export const PrincessCards = () => {
         currency: 'SHROUK',
         status: 'completed'
       });
-      
-      return { cardId, upgradeCost };
+      return {
+        cardId,
+        upgradeCost
+      };
     },
-    onSuccess: ({ upgradeCost }) => {
+    onSuccess: ({
+      upgradeCost
+    }) => {
       toast({
         title: t('cardUpgraded'),
-        description: `${t('upgradedFor')} ${upgradeCost} SHROUK`,
+        description: `${t('upgradedFor')} ${upgradeCost} SHROUK`
       });
-      queryClient.invalidateQueries({ queryKey: ['user-cards'] });
-      queryClient.invalidateQueries({ queryKey: ['user-balance'] });
+      queryClient.invalidateQueries({
+        queryKey: ['user-cards']
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['user-balance']
+      });
     },
     onError: (error: any) => {
       console.error('Upgrade error:', error);
@@ -253,7 +285,7 @@ export const PrincessCards = () => {
         description: error.message === 'Insufficient balance' ? t('insufficientBalance') : t('upgradeError'),
         variant: "destructive"
       });
-    },
+    }
   });
 
   // Auto-process yields on component mount
@@ -262,9 +294,10 @@ export const PrincessCards = () => {
       processYieldsMutation.mutate();
     }
   }, [wallet?.account?.address, userCards.length]);
-
   const getCardImage = (cardName: string) => {
-    const imageMap: { [key: string]: string } = {
+    const imageMap: {
+      [key: string]: string;
+    } = {
       'Barbie': '/lovable-uploads/625f75fe-4623-4230-8125-6432e904ac65.png',
       'Rapunzel': '/lovable-uploads/56f5cff5-d5b5-4eaf-83e8-99fccd2f939b.png',
       'Elsa': '/lovable-uploads/0ba5cd8b-a167-49c0-808c-f0a06b2585da.png',
@@ -274,27 +307,34 @@ export const PrincessCards = () => {
     };
     return imageMap[cardName] || '/lovable-uploads/b9511081-08ef-4089-85f5-8978bd7b19b9.png';
   };
-
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
-      case 'common': return 'bg-gray-500';
-      case 'rare': return 'bg-blue-500';
-      case 'epic': return 'bg-purple-500';
-      case 'legendary': return 'bg-princess-gold';
-      default: return 'bg-gray-500';
+      case 'common':
+        return 'bg-gray-500';
+      case 'rare':
+        return 'bg-blue-500';
+      case 'epic':
+        return 'bg-purple-500';
+      case 'legendary':
+        return 'bg-princess-gold';
+      default:
+        return 'bg-gray-500';
     }
   };
-
   const getRarityBorder = (rarity: string) => {
     switch (rarity) {
-      case 'common': return 'border-gray-300';
-      case 'rare': return 'border-blue-300 shadow-blue-200';
-      case 'epic': return 'border-purple-300 shadow-purple-200';
-      case 'legendary': return 'border-princess-gold shadow-yellow-200';
-      default: return 'border-gray-300';
+      case 'common':
+        return 'border-gray-300';
+      case 'rare':
+        return 'border-blue-300 shadow-blue-200';
+      case 'epic':
+        return 'border-purple-300 shadow-purple-200';
+      case 'legendary':
+        return 'border-princess-gold shadow-yellow-200';
+      default:
+        return 'border-gray-300';
     }
   };
-
   const getOwnedCard = (cardId: string) => {
     return userCards.find(uc => uc.card_id === cardId);
   };
@@ -303,7 +343,6 @@ export const PrincessCards = () => {
   const getActualHourlyYield = (baseYield: number, level: number) => {
     return baseYield * Math.pow(2, level - 1);
   };
-
   const getTotalHourlyEarnings = () => {
     return userCards.reduce((total, userCard) => {
       const card = cards.find(c => c.id === userCard.card_id);
@@ -313,39 +352,31 @@ export const PrincessCards = () => {
       return total;
     }, 0);
   };
-
   const canAfford = (price: number, currency: string) => {
     if (!userBalance) {
       console.log('No user balance available');
       return false;
     }
-    
-    const balance = currency === 'SHROUK' 
-      ? (userBalance.shrouk_balance || 0) 
-      : (userBalance.ton_balance || 0);
-    
-    console.log('Balance check:', { price, currency, balance, canAfford: balance >= price });
+    const balance = currency === 'SHROUK' ? userBalance.shrouk_balance || 0 : userBalance.ton_balance || 0;
+    console.log('Balance check:', {
+      price,
+      currency,
+      balance,
+      canAfford: balance >= price
+    });
     return balance >= price;
   };
-
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px]">
+    return <div className="flex items-center justify-center min-h-[200px]">
         <Loader2 className="w-8 h-8 animate-spin text-princess-purple" />
-      </div>
-    );
+      </div>;
   }
-
   if (!wallet?.account?.address) {
-    return (
-      <div className="text-center p-8">
+    return <div className="text-center p-8">
         <p className="text-gray-600">{t('connectWalletToViewCards')}</p>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Total Hourly Earnings */}
       <Card className="glass-card p-4 bg-gradient-to-r from-princess-pink/20 to-princess-purple/20 border border-princess-gold/30">
         <div className="flex items-center justify-between">
@@ -357,48 +388,29 @@ export const PrincessCards = () => {
             <p className="font-bold text-princess-pink text-sm">
               +{getTotalHourlyEarnings().toLocaleString()} SHROUK/h
             </p>
-            <Button 
-              onClick={() => processYieldsMutation.mutate()}
-              size="sm" 
-              variant="ghost" 
-              className="text-xs mt-1"
-              disabled={processYieldsMutation.isPending}
-            >
-              {processYieldsMutation.isPending ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                t('collectYields')
-              )}
+            <Button onClick={() => processYieldsMutation.mutate()} size="sm" variant="ghost" className="text-xs mt-1" disabled={processYieldsMutation.isPending}>
+              {processYieldsMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : t('collectYields')}
             </Button>
           </div>
         </div>
       </Card>
 
       {/* Debug Balance Info - Remove this in production */}
-      {userBalance && (
-        <Card className="glass-card p-2 bg-blue-50/20 border border-blue-200">
+      {userBalance && <Card className="glass-card p-2 bg-blue-50/20 border border-blue-200">
           <div className="text-xs">
             <p>Debug: SHROUK Balance: {userBalance.shrouk_balance || 0}</p>
             <p>Debug: TON Balance: {userBalance.ton_balance || 0}</p>
           </div>
-        </Card>
-      )}
+        </Card>}
 
       {/* Princess Cards Grid */}
       <div className="grid grid-cols-1 gap-4">
         {cards.map(card => {
-          const ownedCard = getOwnedCard(card.id);
-          const isOwned = !!ownedCard;
-          const actualYield = isOwned ? getActualHourlyYield(card.hourly_yield, ownedCard.level) : card.hourly_yield;
-          const upgradeCost = isOwned ? card.price * ownedCard.level * 2 : 0;
-          
-          return (
-            <Card 
-              key={card.id} 
-              className={`glass-card p-4 border-2 shadow-lg ${getRarityBorder(card.rarity)} ${
-                isOwned ? 'bg-gradient-to-br from-green-50/30 to-emerald-50/30 border-green-400' : 'bg-gradient-to-br from-white/10 to-white/5'
-              } hover:shadow-xl transition-all duration-300 hover:scale-[1.01]`}
-            >
+        const ownedCard = getOwnedCard(card.id);
+        const isOwned = !!ownedCard;
+        const actualYield = isOwned ? getActualHourlyYield(card.hourly_yield, ownedCard.level) : card.hourly_yield;
+        const upgradeCost = isOwned ? card.price * ownedCard.level * 2 : 0;
+        return <Card key={card.id} className={`glass-card p-4 border-2 shadow-lg ${getRarityBorder(card.rarity)} ${isOwned ? 'bg-gradient-to-br from-green-50/30 to-emerald-50/30 border-green-400' : 'bg-gradient-to-br from-white/10 to-white/5'} hover:shadow-xl transition-all duration-300 hover:scale-[1.01]`}>
               <div className="flex items-start gap-4">
                 {/* Princess Avatar */}
                 <div className="relative flex-shrink-0">
@@ -418,17 +430,15 @@ export const PrincessCards = () => {
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-bold text-lg text-gray-800">{card.name}</h3>
-                    {isOwned && (
-                      <Badge variant="outline" className="text-xs bg-green-50 border-green-300 text-green-700">
+                    {isOwned && <Badge variant="outline" className="text-xs bg-green-50 border-green-300 text-green-700">
                         {t('level')} {ownedCard.level}
-                      </Badge>
-                    )}
+                      </Badge>}
                   </div>
                   
-                  <p className="text-xs leading-relaxed text-violet-950">{card.description}</p>
+                  <p className="leading-relaxed text-violet-950 text-xs mx-[56px] px-[2px] my-0">{card.description}</p>
                   
                   {/* Stats */}
-                  <div className="bg-white/20 rounded-lg p-2 space-y-1">
+                  <div className="bg-white/20 rounded-lg p-2 space-y-1 px-0 mx-[66px]">
                     <div className="flex items-center gap-2">
                       <Coins className="w-3 h-3 text-princess-gold" />
                       <span className="font-semibold text-xs">
@@ -446,52 +456,23 @@ export const PrincessCards = () => {
 
                   {/* Action Buttons - Mobile Optimized */}
                   <div className="pt-1">
-                    {!isOwned ? (
-                      <Button 
-                        onClick={() => buyCardMutation.mutate({ 
-                          cardId: card.id, 
-                          price: card.price, 
-                          currency: card.currency 
-                        })}
-                        size="sm" 
-                        className="princess-button w-full h-8 text-xs font-bold shadow-md hover:shadow-lg transition-all duration-300"
-                        disabled={buyCardMutation.isPending || !canAfford(card.price, card.currency)}
-                      >
-                        {buyCardMutation.isPending ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : !canAfford(card.price, card.currency) ? (
-                          t('insufficientBalance')
-                        ) : (
-                          t('buyCard')
-                        )}
-                      </Button>
-                    ) : (
-                      <Button 
-                        onClick={() => upgradeCardMutation.mutate({ 
-                          cardId: card.id, 
-                          upgradeCost 
-                        })}
-                        size="sm" 
-                        variant="outline" 
-                        className="w-full h-8 text-xs font-bold border-2 border-princess-purple text-princess-purple hover:bg-princess-purple hover:text-white shadow-md hover:shadow-lg transition-all duration-300"
-                        disabled={upgradeCardMutation.isPending || !canAfford(upgradeCost, 'SHROUK')}
-                      >
-                        {upgradeCardMutation.isPending ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : !canAfford(upgradeCost, 'SHROUK') ? (
-                          t('insufficientBalance')
-                        ) : (
-                          `${t('upgrade')} (Lv.${ownedCard.level + 1}) - ${upgradeCost.toLocaleString()}`
-                        )}
-                      </Button>
-                    )}
+                    {!isOwned ? <Button onClick={() => buyCardMutation.mutate({
+                  cardId: card.id,
+                  price: card.price,
+                  currency: card.currency
+                })} size="sm" disabled={buyCardMutation.isPending || !canAfford(card.price, card.currency)} className="princess-button w-full h-8 font-bold shadow-md hover:shadow-lg transition-all duration-300 text-xs mx-0 px-[6px]">
+                        {buyCardMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : !canAfford(card.price, card.currency) ? t('insufficientBalance') : t('buyCard')}
+                      </Button> : <Button onClick={() => upgradeCardMutation.mutate({
+                  cardId: card.id,
+                  upgradeCost
+                })} size="sm" variant="outline" className="w-full h-8 text-xs font-bold border-2 border-princess-purple text-princess-purple hover:bg-princess-purple hover:text-white shadow-md hover:shadow-lg transition-all duration-300" disabled={upgradeCardMutation.isPending || !canAfford(upgradeCost, 'SHROUK')}>
+                        {upgradeCardMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : !canAfford(upgradeCost, 'SHROUK') ? t('insufficientBalance') : `${t('upgrade')} (Lv.${ownedCard.level + 1}) - ${upgradeCost.toLocaleString()}`}
+                      </Button>}
                   </div>
                 </div>
               </div>
-            </Card>
-          );
-        })}
+            </Card>;
+      })}
       </div>
-    </div>
-  );
+    </div>;
 };
