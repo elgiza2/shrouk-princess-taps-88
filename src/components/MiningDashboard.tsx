@@ -77,37 +77,32 @@ export const MiningDashboard = () => {
       <div className="grid grid-cols-1 gap-4 px-4">
         <Card className="glass-card relative overflow-hidden">
           {/* خلفية متدرجة وشرارات */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10"></div>
-          <div className="absolute top-2 right-2">
-            <Star className="w-4 h-4 text-yellow-400 animate-pulse" />
-          </div>
-          <div className="absolute bottom-2 left-2">
-            <Sparkles className="w-3 h-3 text-blue-400 animate-sparkle" />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
+          <div className="absolute top-1 right-1">
+            <Star className="w-3 h-3 text-yellow-400 animate-pulse" />
           </div>
           
-          <div className="relative p-6 text-center">
-            {/* أيقونة العملة */}
-            <div className="flex justify-center mb-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-                <Coins className="w-6 h-6 text-white" />
+          <div className="relative p-3 text-center">
+            {/* أيقونة العملة المدمجة */}
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                <Coins className="w-3 h-3 text-white" />
               </div>
+              <h3 className="text-sm font-bold text-gray-700">SHROUK</h3>
             </div>
-            
-            {/* اسم العملة */}
-            <h3 className="text-lg font-bold text-gray-700 mb-2">SHROUK Coins</h3>
             
             {/* عدد النقاط */}
-            <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-4 shadow-inner">
-              <p className="text-4xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <div className="bg-white/30 backdrop-blur-sm rounded-xl p-3 shadow-inner">
+              <p className="text-2xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 {shrougEarned.toLocaleString()}
               </p>
-              <p className="text-sm text-gray-600 mt-1">Total Balance</p>
+              <p className="text-xs text-gray-500">Total Balance</p>
             </div>
             
-            {/* مؤشر النمو */}
-            <div className="flex items-center justify-center mt-3 text-green-500">
-              <TrendingUp className="w-4 h-4 mr-1" />
-              <span className="text-sm font-medium">+{tapValue.toFixed(4)} per tap</span>
+            {/* مؤشر النمو مدمج */}
+            <div className="flex items-center justify-center mt-2 text-green-500">
+              <TrendingUp className="w-3 h-3 mr-1" />
+              <span className="text-xs font-medium">+{tapValue.toFixed(4)}</span>
             </div>
           </div>
         </Card>
