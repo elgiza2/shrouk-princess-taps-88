@@ -1,11 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Wallet, Coins, ArrowUpDown, Copy, ExternalLink } from 'lucide-react';
+import { Wallet, Coins, ArrowUpDown, Copy, ExternalLink, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
+import { TonService } from '@/services/tonService';
+import { TransactionService, Transaction } from '@/services/transactionService';
+import { SendTransaction } from './SendTransaction';
 
 export const WalletSection = () => {
   const { t } = useLanguage();
@@ -14,19 +16,86 @@ export const WalletSection = () => {
   const wallet = useTonWallet();
   const [shrougBalance, setShrougBalance] = useState(0);
   const [tonBalance, setTonBalance] = useState(0);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [showSendForm, setShowSendForm] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const tonService = new TonService(tonConnectUI);
+  const transactionService = new TransactionService();
+
+  // تحديث الرصيد عند اتصال المحفظة
   useEffect(() => {
-    if (wallet) {
-      // محاكاة جلب الرصيد
-      setShrougBalance(125.4567);
-      setTonBalance(2.3456);
+    if (wallet?.account?.address) {
+      refreshBalanceAndTransactions();
       
       toast({
         title: "محفظة TON متصلة!",
         description: "تم ربط محفظة TON بنجاح",
       });
+
+      // إعداد الاستماع للمعاملات الجديدة
+      const channel = supabase
+        .channel('transactions-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'transactions',
+            filter: `user_address=eq.${wallet.account.address}`
+          },
+          (payload) => {
+            console.log('New transaction:', payload);
+            refreshBalanceAndTransactions();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [wallet, toast]);
+
+  const refreshBalanceAndTransactions = async () => {
+    if (!wallet?.account?.address) return;
+
+    setIsRefreshing(true);
+    try {
+      // الحصول على الرصيد الحقيقي من شبكة TON
+      const realTonBalance = await tonService.getBalance(wallet.account.address);
+      
+      // الحصول على الرصيد المحفوظ في قاعدة البيانات
+      const savedBalance = await transactionService.getUserBalance(wallet.account.address);
+      
+      const currentShrougBalance = savedBalance?.shrougBalance || 0;
+      
+      // تحديث الأرصدة
+      setTonBalance(realTonBalance);
+      setShrougBalance(currentShrougBalance);
+      
+      // حفظ الرصيد المحدث في قاعدة البيانات
+      await transactionService.updateUserBalance(
+        wallet.account.address, 
+        realTonBalance, 
+        currentShrougBalance
+      );
+
+      // الحصول على المعاملات
+      const userTransactions = await transactionService.getTransactionsByAddress(wallet.account.address);
+      setTransactions(userTransactions);
+      
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في تحديث البيانات",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const connectWallet = async () => {
     try {
@@ -45,6 +114,7 @@ export const WalletSection = () => {
       await tonConnectUI.disconnect();
       setShrougBalance(0);
       setTonBalance(0);
+      setTransactions([]);
       
       toast({
         title: "تم قطع الاتصال",
@@ -92,7 +162,6 @@ export const WalletSection = () => {
           </Button>
         </Card>
 
-        {/* معلومات إضافية عن المحافظ المدعومة */}
         <Card className="glass-card p-4">
           <h3 className="font-bold mb-3">المحافظ المدعومة</h3>
           <div className="space-y-2 text-sm text-gray-600">
@@ -122,13 +191,23 @@ export const WalletSection = () => {
               </p>
             </div>
           </div>
-          <Button 
-            onClick={disconnectWallet}
-            variant="outline" 
-            size="sm"
-          >
-            قطع الاتصال
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={refreshBalanceAndTransactions}
+              variant="outline" 
+              size="sm"
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? "تحديث..." : "تحديث"}
+            </Button>
+            <Button 
+              onClick={disconnectWallet}
+              variant="outline" 
+              size="sm"
+            >
+              قطع الاتصال
+            </Button>
+          </div>
         </div>
         
         <div className="flex gap-2">
@@ -168,6 +247,18 @@ export const WalletSection = () => {
         </Card>
       </div>
 
+      {/* زر إرسال المعاملات */}
+      <Button 
+        onClick={() => setShowSendForm(!showSendForm)}
+        className="w-full princess-button"
+      >
+        <Send className="w-4 h-4 mr-2" />
+        {showSendForm ? 'إخفاء نموذج الإرسال' : 'إرسال معاملة'}
+      </Button>
+
+      {/* نموذج إرسال المعاملات */}
+      {showSendForm && <SendTransaction />}
+
       {/* سجل المعاملات */}
       <Card className="glass-card p-4">
         <h3 className="font-bold mb-4 flex items-center gap-2">
@@ -175,23 +266,42 @@ export const WalletSection = () => {
           المعاملات الأخيرة
         </h3>
         <div className="space-y-3">
-          {[
-            { type: 'earned', amount: '+0.025 SHROUK', time: 'منذ دقيقتين' },
-            { type: 'earned', amount: '+0.002 TON', time: 'منذ ساعة' },
-            { type: 'purchase', amount: '-1.0 TON', time: 'منذ 3 ساعات' },
-          ].map((tx, index) => (
-            <div key={index} className="flex justify-between items-center py-2 border-b border-white/10 last:border-b-0">
-              <div>
-                <p className="font-medium capitalize">
-                  {tx.type === 'earned' ? 'مكسب' : 'شراء'}
-                </p>
-                <p className="text-sm text-gray-600">{tx.time}</p>
+          {transactions.length > 0 ? (
+            transactions.map((tx) => (
+              <div key={tx.id} className="flex justify-between items-center py-2 border-b border-white/10 last:border-b-0">
+                <div>
+                  <p className="font-medium capitalize">
+                    {tx.transaction_type === 'send' ? 'إرسال' : 
+                     tx.transaction_type === 'receive' ? 'استلام' : 'مكافأة التعدين'}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {tx.status === 'confirmed' ? 'مؤكد' : 
+                     tx.status === 'pending' ? 'في الانتظار' : 'فشل'}
+                  </p>
+                  {tx.transaction_hash && (
+                    <p className="text-xs text-blue-500 cursor-pointer" 
+                       onClick={() => window.open(`https://tonscan.org/tx/${tx.transaction_hash}`, '_blank')}>
+                      عرض في المستكشف
+                    </p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className={`font-bold ${
+                    tx.transaction_type === 'receive' || tx.transaction_type === 'mining_reward' 
+                      ? 'text-green-500' : 'text-red-500'
+                  }`}>
+                    {tx.transaction_type === 'send' ? '-' : '+'}
+                    {tx.amount} {tx.currency}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(tx.created_at!).toLocaleDateString('ar')}
+                  </p>
+                </div>
               </div>
-              <p className={`font-bold ${tx.type === 'earned' ? 'text-green-500' : 'text-red-500'}`}>
-                {tx.amount}
-              </p>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-center text-gray-500">لا توجد معاملات</p>
+          )}
         </div>
       </Card>
     </div>
