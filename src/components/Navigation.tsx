@@ -27,8 +27,8 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 nav-glow p-3">
-      <div className="max-w-md mx-auto grid grid-cols-5 gap-2">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/10 backdrop-blur-md border-t border-white/20 p-2">
+      <div className="max-w-md mx-auto grid grid-cols-5 gap-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -39,28 +39,14 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
               onClick={() => onTabChange(tab.id)}
               variant="ghost"
               size="sm"
-              className={`
-                relative flex flex-col items-center gap-1 h-auto py-3 px-2 rounded-2xl
-                transition-all duration-300 ease-in-out transform
-                ${isActive 
-                  ? 'bg-gradient-to-t from-purple-600/30 to-blue-600/30 text-white scale-105 shadow-lg border border-white/30' 
-                  : 'text-white/70 hover:text-white hover:bg-white/10 hover:scale-105'
-                }
-                backdrop-blur-sm
-              `}
+              className={`flex flex-col items-center gap-1 h-auto py-2 px-1 ${
+                isActive 
+                  ? 'text-princess-pink bg-princess-pink/20' 
+                  : 'text-gray-600 hover:text-princess-pink hover:bg-princess-pink/10'
+              }`}
             >
-              {isActive && (
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-purple-500/20 to-blue-500/20 animate-pulse" />
-              )}
-              <div className="relative z-10 flex flex-col items-center gap-1">
-                <Icon className={`w-5 h-5 transition-all duration-300 ${isActive ? 'drop-shadow-lg' : ''}`} />
-                <span className={`text-xs leading-none font-medium transition-all duration-300 ${isActive ? 'drop-shadow-sm' : ''}`}>
-                  {tab.label}
-                </span>
-              </div>
-              {isActive && (
-                <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full shadow-glow" />
-              )}
+              <Icon className="w-5 h-5" />
+              <span className="text-xs leading-none">{tab.label}</span>
             </Button>
           );
         })}
