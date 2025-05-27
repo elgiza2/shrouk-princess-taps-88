@@ -11,7 +11,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// TON Connect manifest - using a proper manifest for the project
+// استخدام رابط مانيفست بسيط ومحدث
 const manifestUrl = 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json';
 
 const App = () => (
@@ -19,7 +19,7 @@ const App = () => (
     <TonConnectUIProvider 
       manifestUrl={manifestUrl}
       uiPreferences={{
-        theme: 'SYSTEM',
+        theme: THEME.SYSTEM,
         colorsSet: {
           [THEME.DARK]: {
             connectButton: {
@@ -31,7 +31,7 @@ const App = () => (
           },
           [THEME.LIGHT]: {
             connectButton: {
-              background: '#7c3aed',
+              background: '#7c3aed', 
               foreground: '#ffffff',
             },
             accent: '#7c3aed',

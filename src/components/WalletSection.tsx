@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Wallet, Coins, ArrowUpDown, Copy, Send, Loader2 } from 'lucide-react';
+import { Wallet, Coins, ArrowUpDown, Copy, Send, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TonConnectButton, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,18 +18,48 @@ export const WalletSection = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [isSendingTransaction, setIsSendingTransaction] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
 
-  // Load user balance from Supabase when wallet connects
+  // تتبع حالة الاتصال
   useEffect(() => {
+    console.log('Wallet connection status changed:', wallet ? 'connected' : 'disconnected');
+    console.log('Wallet details:', wallet);
+
     if (wallet?.account?.address) {
-      console.log('Wallet connected:', wallet.account.address);
+      console.log('Wallet connected successfully:', wallet.account.address);
+      setConnectionStatus('connected');
       loadUserBalance();
       loadUserTransactions();
       fetchRealTonBalance();
+      
+      toast({
+        title: "تم ربط المحفظة بنجاح! ✅",
+        description: `عنوان المحفظة: ${wallet.account.address.slice(0, 6)}...${wallet.account.address.slice(-6)}`,
+      });
     } else {
       console.log('No wallet connected');
+      setConnectionStatus('disconnected');
+      setShrougBalance(0);
+      setTonBalance(0);
+      setTransactions([]);
     }
   }, [wallet?.account?.address]);
+
+  // مراقبة حالة TonConnect
+  useEffect(() => {
+    const unsubscribe = tonConnectUI.onStatusChange((wallet) => {
+      console.log('TonConnect status change:', wallet);
+      if (wallet) {
+        setConnectionStatus('connected');
+      } else {
+        setConnectionStatus('disconnected');
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [tonConnectUI]);
 
   const fetchRealTonBalance = async () => {
     if (!wallet?.account?.address) return;
@@ -38,7 +68,6 @@ export const WalletSection = () => {
     try {
       console.log('Fetching balance for:', wallet.account.address);
       
-      // Use TON API v2 for better reliability
       const response = await fetch(
         `https://toncenter.com/api/v2/getAddressBalance?address=${wallet.account.address}`,
         {
@@ -56,12 +85,10 @@ export const WalletSection = () => {
         console.log('Balance API response:', data);
         
         if (data.ok && data.result !== undefined) {
-          // Convert from nanotons to TON (1 TON = 1e9 nanotons)
           const realBalance = parseFloat(data.result) / 1e9;
           console.log('Real balance:', realBalance);
           setTonBalance(realBalance);
           
-          // Update balance in database
           await updateTonBalanceInDB(realBalance);
           
           toast({
@@ -127,7 +154,6 @@ export const WalletSection = () => {
         setShrougBalance(data.shrouk_balance);
         setTonBalance(data.ton_balance);
       } else {
-        // Create initial balance record
         const { error: insertError } = await supabase
           .from('user_balances')
           .insert({
@@ -171,25 +197,28 @@ export const WalletSection = () => {
     if (wallet?.account?.address) {
       navigator.clipboard.writeText(wallet.account.address);
       toast({
-        title: "تم نسخ العنوان!",
+        title: "تم نسخ العنوان! 📋",
         description: "تم نسخ عنوان المحفظة إلى الحافظة.",
       });
     }
   };
 
-  const disconnectWallet = () => {
+  const disconnectWallet = async () => {
     try {
-      tonConnectUI.disconnect();
+      setConnectionStatus('connecting');
+      await tonConnectUI.disconnect();
       setShrougBalance(0);
       setTonBalance(0);
       setTransactions([]);
+      setConnectionStatus('disconnected');
       
       toast({
-        title: "تم قطع الاتصال!",
+        title: "تم قطع الاتصال! 🔌",
         description: "تم قطع الاتصال بمحفظة TON.",
       });
     } catch (error) {
       console.error('Error disconnecting wallet:', error);
+      setConnectionStatus('error');
       toast({
         title: "خطأ في قطع الاتصال",
         description: "حدث خطأ أثناء قطع الاتصال",
@@ -198,7 +227,6 @@ export const WalletSection = () => {
     }
   };
 
-  // Send real TON transaction
   const sendRealTonTransaction = async (toAddress: string, amount: number) => {
     if (!wallet?.account?.address) {
       toast({
@@ -211,11 +239,10 @@ export const WalletSection = () => {
 
     setIsSendingTransaction(true);
     try {
-      // Convert TON to nanotons
       const amountInNanotons = Math.floor(amount * 1e9).toString();
 
       const transaction = {
-        validUntil: Math.floor(Date.now() / 1000) + 300, // 5 minutes
+        validUntil: Math.floor(Date.now() / 1000) + 300,
         messages: [
           {
             address: toAddress,
@@ -228,7 +255,6 @@ export const WalletSection = () => {
       const result = await tonConnectUI.sendTransaction(transaction);
       console.log('Transaction result:', result);
       
-      // Save transaction to database
       const { error } = await supabase
         .from('transactions')
         .insert({
@@ -246,11 +272,10 @@ export const WalletSection = () => {
       }
 
       toast({
-        title: "تم إرسال المعاملة!",
+        title: "تم إرسال المعاملة! ✅",
         description: `تم إرسال ${amount} TON بنجاح`,
       });
 
-      // Reload transactions and balance after successful send
       setTimeout(() => {
         loadUserTransactions();
         fetchRealTonBalance();
@@ -268,34 +293,59 @@ export const WalletSection = () => {
     }
   };
 
-  // Predefined test transaction
   const sendTestTransaction = () => {
-    // Test wallet address - this is a valid TON testnet address
     const testAddress = "EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N";
-    const testAmount = 0.01; // 0.01 TON
+    const testAmount = 0.01;
     sendRealTonTransaction(testAddress, testAmount);
+  };
+
+  const getConnectionStatusIcon = () => {
+    switch (connectionStatus) {
+      case 'connected':
+        return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'connecting':
+        return <Loader2 className="w-5 h-5 text-yellow-500 animate-spin" />;
+      case 'error':
+        return <AlertCircle className="w-5 h-5 text-red-500" />;
+      default:
+        return <AlertCircle className="w-5 h-5 text-gray-400" />;
+    }
   };
 
   if (!wallet) {
     return (
       <div className="space-y-6">
         <Card className="glass-card p-8 text-center">
-          <Wallet className="w-16 h-16 mx-auto mb-4 text-princess-purple" />
+          <div className="flex justify-center items-center gap-2 mb-4">
+            <Wallet className="w-16 h-16 text-princess-purple" />
+            {getConnectionStatusIcon()}
+          </div>
           <h2 className="text-xl font-bold mb-2">اربط محفظة TON</h2>
           <p className="text-gray-600 mb-6">
             اربط محفظتك لإدارة رموز $SHROUK و $TON الخاصة بك
           </p>
-          <div className="flex justify-center mb-4">
-            <TonConnectButton />
+          
+          <div className="mb-6">
+            <TonConnectButton className="mx-auto" />
           </div>
+          
           <div className="text-sm text-gray-500 space-y-2">
             <p>المحافظ المدعومة:</p>
             <div className="flex justify-center gap-2 flex-wrap">
               <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">TON Wallet</span>
               <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Tonkeeper</span>
               <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">TON Hub</span>
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">MyTonWallet</span>
             </div>
           </div>
+          
+          {connectionStatus === 'error' && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">
+                حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.
+              </p>
+            </div>
+          )}
         </Card>
       </div>
     );
@@ -306,11 +356,14 @@ export const WalletSection = () => {
       {/* Wallet Address */}
       <Card className="glass-card p-4">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-600">عنوان المحفظة</p>
-            <p className="font-mono text-sm">
-              {wallet.account.address.slice(0, 6)}...{wallet.account.address.slice(-6)}
-            </p>
+          <div className="flex items-center gap-2">
+            <div>
+              <p className="text-sm text-gray-600">عنوان المحفظة</p>
+              <p className="font-mono text-sm">
+                {wallet.account.address.slice(0, 6)}...{wallet.account.address.slice(-6)}
+              </p>
+            </div>
+            {getConnectionStatusIcon()}
           </div>
           <div className="flex gap-2">
             <Button 
@@ -324,8 +377,9 @@ export const WalletSection = () => {
               onClick={disconnectWallet}
               variant="outline" 
               size="sm"
+              disabled={connectionStatus === 'connecting'}
             >
-              قطع الاتصال
+              {connectionStatus === 'connecting' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'قطع الاتصال'}
             </Button>
           </div>
         </div>
