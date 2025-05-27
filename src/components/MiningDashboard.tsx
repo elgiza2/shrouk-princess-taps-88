@@ -3,7 +3,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Zap, Coins, TrendingUp, Sparkles, ArrowUp } from 'lucide-react';
+import { Zap, Coins, TrendingUp, Sparkles, ArrowUp, Star } from 'lucide-react';
+
 export const MiningDashboard = () => {
   const {
     t
@@ -73,15 +74,42 @@ export const MiningDashboard = () => {
   };
   return <div className="space-y-6">
       {/* Mining Stats - SHROUK Only */}
-      <div className="grid grid-cols-1 gap-4 px-[13px]">
-        <Card className="glass-card p-4 animate-float rounded-full px-0 py-0 mx-[24px] my-[13px]">
-          <div className="flex items-center gap-2 mb-2 px-[106px]">
-            
-            <span className="text-sm font-medium">SHROUK</span>
+      <div className="grid grid-cols-1 gap-4 px-4">
+        <Card className="glass-card relative overflow-hidden">
+          {/* خلفية متدرجة وشرارات */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10"></div>
+          <div className="absolute top-2 right-2">
+            <Star className="w-4 h-4 text-yellow-400 animate-pulse" />
           </div>
-          <p className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent px-[127px]">
-            {shrougEarned.toFixed(0)}
-          </p>
+          <div className="absolute bottom-2 left-2">
+            <Sparkles className="w-3 h-3 text-blue-400 animate-sparkle" />
+          </div>
+          
+          <div className="relative p-6 text-center">
+            {/* أيقونة العملة */}
+            <div className="flex justify-center mb-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <Coins className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            
+            {/* اسم العملة */}
+            <h3 className="text-lg font-bold text-gray-700 mb-2">SHROUK Coins</h3>
+            
+            {/* عدد النقاط */}
+            <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-4 shadow-inner">
+              <p className="text-4xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                {shrougEarned.toLocaleString()}
+              </p>
+              <p className="text-sm text-gray-600 mt-1">Total Balance</p>
+            </div>
+            
+            {/* مؤشر النمو */}
+            <div className="flex items-center justify-center mt-3 text-green-500">
+              <TrendingUp className="w-4 h-4 mr-1" />
+              <span className="text-sm font-medium">+{tapValue.toFixed(4)} per tap</span>
+            </div>
+          </div>
         </Card>
       </div>
 
