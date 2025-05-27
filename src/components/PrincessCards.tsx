@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Crown, Coins, Star, Sparkles, Loader2, ShoppingCart, TrendingUp } from 'lucide-react';
+import { Crown, Coins, Star, Sparkles, Loader2, ShoppingCart, TrendingUp, Zap, Gem } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTonWallet } from '@tonconnect/ui-react';
 import { useToast } from '@/hooks/use-toast';
@@ -441,6 +441,8 @@ export const PrincessCards = () => {
           const isOwned = !!ownedCard;
           const actualYield = isOwned ? getActualHourlyYield(card.hourly_yield, ownedCard.level) : card.hourly_yield;
           const upgradeCost = isOwned ? card.price * ownedCard.level * 2 : 0;
+          const canAffordCard = canAfford(card.price, card.currency);
+          const canAffordUpgrade = isOwned && canAfford(upgradeCost, 'SHROUK');
           
           return (
             <Card 
@@ -499,59 +501,88 @@ export const PrincessCards = () => {
                   {/* Enhanced Action Buttons */}
                   <div className="pt-2 space-y-2">
                     {!isOwned ? (
-                      <Button 
-                        onClick={() => buyCardMutation.mutate({ cardId: card.id, price: card.price, currency: card.currency })}
-                        size="sm" 
-                        disabled={buyCardMutation.isPending || !canAfford(card.price, card.currency) || !wallet?.account?.address} 
-                        className={`w-full h-9 font-bold shadow-md hover:shadow-lg transition-all duration-300 text-xs ${
-                          canAfford(card.price, card.currency) && wallet?.account?.address
-                            ? 'princess-button bg-gradient-to-r from-princess-pink to-princess-purple text-white hover:scale-105' 
-                            : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                        }`}
-                      >
-                        {buyCardMutation.isPending ? (
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                            <span>جاري الشراء...</span>
-                          </div>
-                        ) : !wallet?.account?.address ? (
-                          <div className="flex items-center gap-2">
-                            <ShoppingCart className="w-3 h-3" />
-                            <span>اربط المحفظة أولاً</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <ShoppingCart className="w-3 h-3" />
-                            <span>{getPurchaseButtonText(card)}</span>
-                          </div>
-                        )}
-                      </Button>
+                      /* Purchase Button with enhanced design */
+                      <div className="relative group">
+                        <div className={`absolute inset-0 rounded-lg blur opacity-25 group-hover:opacity-40 transition-opacity duration-300 ${
+                          canAffordCard ? 'bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500' : 'bg-gray-400'
+                        }`}></div>
+                        <Button 
+                          onClick={() => buyCardMutation.mutate({ cardId: card.id, price: card.price, currency: card.currency })}
+                          size="sm" 
+                          disabled={buyCardMutation.isPending || !canAffordCard || !wallet?.account?.address} 
+                          className={`relative w-full h-12 font-bold text-sm transition-all duration-300 ${
+                            canAffordCard && wallet?.account?.address
+                              ? 'bg-gradient-to-r from-pink-600 via-purple-600 to-pink-600 hover:from-pink-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] border-0 group-hover:shadow-pink-500/30' 
+                              : 'bg-gray-300/80 text-gray-600 cursor-not-allowed border border-gray-400'
+                          }`}
+                        >
+                          {buyCardMutation.isPending ? (
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>جاري الشراء...</span>
+                            </div>
+                          ) : !wallet?.account?.address ? (
+                            <div className="flex items-center gap-2">
+                              <Zap className="w-4 h-4" />
+                              <span>اربط المحفظة أولاً</span>
+                            </div>
+                          ) : !canAffordCard ? (
+                            <div className="flex items-center gap-2">
+                              <Coins className="w-4 h-4" />
+                              <span>رصيد غير كافي</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Gem className="w-4 h-4" />
+                              <span>شراء - {card.price.toLocaleString()} {card.currency}</span>
+                            </div>
+                          )}
+                        </Button>
+                      </div>
                     ) : (
-                      <Button 
-                        onClick={() => upgradeCardMutation.mutate({ cardId: card.id, upgradeCost })}
-                        size="sm" 
-                        variant="outline" 
-                        className="w-full h-9 text-xs font-bold border-2 border-princess-purple text-princess-purple hover:bg-princess-purple hover:text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105" 
-                        disabled={upgradeCardMutation.isPending || !canAfford(upgradeCost, 'SHROUK') || !wallet?.account?.address}
-                      >
-                        {upgradeCardMutation.isPending ? (
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                            <span>جاري الترقية...</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <TrendingUp className="w-3 h-3" />
-                            <span>{getUpgradeButtonText(ownedCard, upgradeCost)}</span>
-                          </div>
-                        )}
-                      </Button>
+                      /* Upgrade Button with enhanced design */
+                      <div className="relative group">
+                        <div className={`absolute inset-0 rounded-lg blur opacity-25 group-hover:opacity-40 transition-opacity duration-300 ${
+                          canAffordUpgrade ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500' : 'bg-gray-400'
+                        }`}></div>
+                        <Button 
+                          onClick={() => upgradeCardMutation.mutate({ cardId: card.id, upgradeCost })}
+                          size="sm" 
+                          variant="outline" 
+                          className={`relative w-full h-12 text-sm font-bold transition-all duration-300 ${
+                            canAffordUpgrade && wallet?.account?.address
+                              ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white border-0 shadow-lg hover:shadow-xl hover:scale-[1.02] group-hover:shadow-emerald-500/30'
+                              : 'bg-gray-200/80 text-gray-600 border-gray-400 cursor-not-allowed'
+                          }`}
+                          disabled={upgradeCardMutation.isPending || !canAffordUpgrade || !wallet?.account?.address}
+                        >
+                          {upgradeCardMutation.isPending ? (
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>جاري الترقية...</span>
+                            </div>
+                          ) : !canAffordUpgrade ? (
+                            <div className="flex items-center gap-2">
+                              <Coins className="w-4 h-4" />
+                              <span>رصيد غير كافي للترقية</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <TrendingUp className="w-4 h-4" />
+                              <span>ترقية → Lv.{ownedCard.level + 1} ({upgradeCost.toLocaleString()} SHROUK)</span>
+                            </div>
+                          )}
+                        </Button>
+                      </div>
                     )}
                     
                     {/* Additional info for owned cards */}
                     {isOwned && (
-                      <div className="text-xs text-center text-green-600 bg-green-50 py-1 rounded">
-                        ✓ مملوكة - المستوى {ownedCard.level}
+                      <div className="text-xs text-center p-2 rounded-lg bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-300">
+                        <div className="flex items-center justify-center gap-1">
+                          <Star className="w-3 h-3" />
+                          <span>مملوكة - المستوى {ownedCard.level}</span>
+                        </div>
                       </div>
                     )}
                   </div>
