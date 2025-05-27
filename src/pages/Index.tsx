@@ -32,7 +32,7 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-md mx-auto p-4 pb-20">
+      <main className="max-w-md mx-auto p-4 pb-20 py-0">
         {activeTab === 'mining' && <MiningDashboard />}
         {activeTab === 'cards' && <PrincessCards />}
         {activeTab === 'wallet' && <WalletSection />}

@@ -66,25 +66,7 @@ export const ReferralPage = () => {
   }];
   return <div className="space-y-6">
       {/* Referral Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card className="glass-card p-3 text-center">
-          <Users className="w-6 h-6 mx-auto mb-1 text-princess-pink" />
-          <p className="text-sm text-gray-600">Invites</p>
-          <p className="text-xl font-bold">{referralStats.totalInvites}</p>
-        </Card>
-        
-        <Card className="glass-card p-3 text-center">
-          <Trophy className="w-6 h-6 mx-auto mb-1 text-princess-gold" />
-          <p className="text-sm text-gray-600">Earned</p>
-          <p className="text-xl font-bold">{referralStats.totalEarned}</p>
-        </Card>
-        
-        <Card className="glass-card p-3 text-center">
-          <Share className="w-6 h-6 mx-auto mb-1 text-princess-purple" />
-          <p className="text-sm text-gray-600">Rank</p>
-          <p className="text-xl font-bold">#{referralStats.rank}</p>
-        </Card>
-      </div>
+      
 
       {/* How to Get Referral Link */}
       <Card className="glass-card p-4">
