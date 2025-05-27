@@ -19,7 +19,7 @@ const App = () => (
     <TonConnectUIProvider 
       manifestUrl={manifestUrl}
       uiPreferences={{
-        theme: THEME.SYSTEM,
+        theme: THEME.DARK,
         colorsSet: {
           [THEME.DARK]: {
             connectButton: {
