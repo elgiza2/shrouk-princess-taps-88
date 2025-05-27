@@ -126,7 +126,13 @@ const translations: { [key: string]: { [key: string]: string } } = {
     completeTasksAndEarnRewards: 'Complete tasks and earn rewards',
     noDailyTasks: 'No daily tasks available',
     noMainTasks: 'No main tasks available',
-    noPartnerTasks: 'No partner tasks available'
+    noPartnerTasks: 'No partner tasks available',
+    connectWalletToStart: 'Connect Your Wallet to Get Started',
+    connectWalletDescription: 'Please connect your TON wallet to start mining SHROUK tokens and unlock all features.',
+    skipForNow: 'Skip for Now',
+    mustConnectWallet: 'You must connect your wallet',
+    initializationError: 'Initialization Error',
+    couldNotInitializeBalance: 'Could not initialize user balance'
   },
   ar: {
     mining: 'التعدين',
@@ -245,7 +251,13 @@ const translations: { [key: string]: { [key: string]: string } } = {
     completeTasksAndEarnRewards: 'أكمل المهام واحصل على المكافآت',
     noDailyTasks: 'لا توجد مهام يومية متاحة',
     noMainTasks: 'لا توجد مهام رئيسية متاحة',
-    noPartnerTasks: 'لا توجد مهام شراكة متاحة'
+    noPartnerTasks: 'لا توجد مهام شراكة متاحة',
+    connectWalletToStart: 'اربط محفظتك للبدء',
+    connectWalletDescription: 'يرجى ربط محفظة TON الخاصة بك لبدء تعدين رموز SHROUK وفتح جميع الميزات.',
+    skipForNow: 'تخطي الآن',
+    mustConnectWallet: 'يجب عليك ربط محفظتك',
+    initializationError: 'خطأ في التهيئة',
+    couldNotInitializeBalance: 'لم نتمكن من تهيئة رصيد المستخدم'
   },
   ru: {
     mining: 'Майнинг',
@@ -364,7 +376,13 @@ const translations: { [key: string]: { [key: string]: string } } = {
     completeTasksAndEarnRewards: 'Выполняйте задания и зарабатывайте награды',
     noDailyTasks: 'Нет ежедневных заданий',
     noMainTasks: 'Нет основных заданий',
-    noPartnerTasks: 'Нет партнерских заданий'
+    noPartnerTasks: 'Нет партнерских заданий',
+    connectWalletToStart: 'Подключите кошелек для начала',
+    connectWalletDescription: 'Пожалуйста, подключите ваш TON кошелек, чтобы начать майнинг токенов SHROUK и разблокировать все функции.',
+    skipForNow: 'Пропустить сейчас',
+    mustConnectWallet: 'Вы должны подключить кошелек',
+    initializationError: 'Ошибка инициализации',
+    couldNotInitializeBalance: 'Не удалось инициализировать баланс пользователя'
   }
 };
 

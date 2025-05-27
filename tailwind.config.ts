@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -114,6 +113,10 @@ export default {
 					'0%': { transform: 'scale(1)' },
 					'50%': { transform: 'scale(0.95)' },
 					'100%': { transform: 'scale(1)' }
+				},
+				'fadeIn': {
+					'0%': { opacity: '0', transform: 'translateY(20px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
 				}
 			},
 			animation: {
@@ -122,7 +125,8 @@ export default {
 				'sparkle': 'sparkle 2s ease-in-out infinite',
 				'float': 'float 3s ease-in-out infinite',
 				'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
-				'tap-bounce': 'tap-bounce 0.2s ease-in-out'
+				'tap-bounce': 'tap-bounce 0.2s ease-in-out',
+				'fadeIn': 'fadeIn 0.5s ease-out'
 			},
 			backgroundImage: {
 				'princess-gradient': 'linear-gradient(135deg, #FF6B9D 0%, #F8BBD9 50%, #E4C1F9 100%)',

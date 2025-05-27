@@ -8,6 +8,7 @@ import { ReferralPage } from '@/components/ReferralPage';
 import { AdminPanel } from '@/components/AdminPanel';
 import { Navigation } from '@/components/Navigation';
 import { LanguageSelector } from '@/components/LanguageSelector';
+import { SplashPage } from '@/components/SplashPage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Sparkles } from 'lucide-react';
 
@@ -15,6 +16,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('mining');
   const [adminTapCount, setAdminTapCount] = useState(0);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
   const { t } = useLanguage();
   // Hold a ref to debounce admin tap gestures
   const lastTapRef = useRef<number>(0);
@@ -39,6 +41,15 @@ const Index = () => {
     // Close admin panel if moving away
     if (tab !== 'admin') setShowAdminPanel(false);
   };
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
+  // Show splash page if not completed
+  if (showSplash) {
+    return <SplashPage onComplete={handleSplashComplete} />;
+  }
 
   return (
     <div className="min-h-screen bg-princess-gradient sparkle-bg">
