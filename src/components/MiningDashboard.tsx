@@ -74,7 +74,7 @@ export const MiningDashboard = () => {
   return <div className="space-y-6">
       {/* Mining Stats - SHROUK Only */}
       <div className="grid grid-cols-1 gap-4 px-[13px]">
-        <Card className="glass-card p-4 animate-float rounded-full px-0 my-0 py-[6px] mx-[28px]">
+        <Card className="glass-card p-4 animate-float rounded-full px-0 py-0 mx-[24px] my-[13px]">
           <div className="flex items-center gap-2 mb-2 px-[106px]">
             
             <span className="text-sm font-medium">SHROUK</span>
